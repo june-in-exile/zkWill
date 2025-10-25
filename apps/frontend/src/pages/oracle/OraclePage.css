@@ -1,0 +1,114 @@
+.oracle-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+.page-header p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+}
+
+.warning-card {
+  background-color: rgba(255, 152, 0, 0.1);
+  border: 1px solid var(--warning-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.warning-card h3 {
+  color: var(--warning-color);
+  margin-bottom: 0.5rem;
+}
+
+.warning-card p {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+.probate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.wills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.will-item {
+  background-color: #0d0d0d;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.will-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.info-row .label {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  min-width: 100px;
+}
+
+.info-row code {
+  background-color: #1a1a1a;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+.btn-probate {
+  white-space: nowrap;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--warning-color);
+}
+
+.btn-probate:hover {
+  background-color: #e68900;
+}
+
+.badge-success {
+  background-color: var(--success-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.empty-state {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 2rem;
+}
