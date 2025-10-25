@@ -88,7 +88,6 @@ interface ApprovalConfig {
 }
 
 interface IpfsPinningConfig {
-  pinataJWT: string | undefined;
   retryAttempts: number;
   timeout: number;
   retryDelay: number;
@@ -283,17 +282,15 @@ export const APPROVAL_CONFIG: ApprovalConfig = {
 // IPFS CONFIG
 // ================================
 export const IPFS_CONFIG: IpfsConfig = {
-  // Pinning settings
+  // Pinning settings (using local Helia instance)
   pinning: {
-    pinataJWT: process.env.PINATA_JWT,
     retryAttempts: 3,
     timeout: 30000,
     retryDelay: 2000,
   },
 
-  // Gateway URLs
+  // Gateway URLs (local node prioritized)
   gateways: [
-    "https://gateway.pinata.cloud/ipfs/",
     "http://localhost:8080/ipfs/",
     "https://ipfs.io/ipfs/",
     "https://gateway.ipfs.io/ipfs/",

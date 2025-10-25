@@ -161,13 +161,9 @@ TESTATOR=0x_YOUR_TESTATOR_ADDRESS
 TESTATOR_PRIVATE_KEY=YOUR_TESTATOR_PRIVATE_KEY_WITHOUT_0X
 ```
 
-Fill in the fields required to interact with IPFS:
+**Note on IPFS**: This project uses a local Helia instance for IPFS storage. No external service configuration is required. Files are stored temporarily for demo purposes.
 
-```bash
-PINATA_JWT=YOUR_PINATA_JWT_TOKEN
-```
-
-The other fileds would be automatically updated during the execution.
+The other fields would be automatically updated during the execution.
 
 ## 🏗️ System Architecture
 
@@ -185,7 +181,7 @@ The other fileds would be automatically updated during the execution.
 - **Framework**: Express
 - **Language**: TypeScript
 - **Encryption**: Symmetric encryption + Zero-knowledge proofs
-- **Storage**: IPFS + Pinata
+- **Storage**: IPFS (Helia local node)
 
 ### Smart Contracts (Solidity + Foundry)
 

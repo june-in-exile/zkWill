@@ -85,7 +85,7 @@ async function main(): Promise<void> {
 
     console.log(chalk.green.bold("\n✅ Process completed successfully!"));
     console.log(chalk.gray("Results:"), {
-      ciphertext: `${preview.longString(result.ciphertext)}`,
+      ciphertext: `${preview.numbers(result.ciphertext)}`,
       timestamp: `${preview.timestamp(result.timestamp * 1000)}`,
       downloadedWillPath: result.downloadedWillPath,
     });
