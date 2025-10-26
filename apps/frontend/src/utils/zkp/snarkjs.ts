@@ -1,8 +1,10 @@
 /**
- * ZKP utilities using snarkjs in browser
+ * ZKP utilities - calls backend API for proof generation
+ *
+ * Note: In production, proof generation should be handled by trusted external nodes
+ * such as TEE (Trusted Execution Environment) to ensure security and performance.
+ * This implementation delegates to a backend server for demonstration purposes.
  */
-
-import { groth16 } from 'snarkjs';
 
 export interface Groth16Proof {
   proof: {
@@ -23,9 +25,11 @@ export interface ZKPInput {
 
 export type CircuitName = 'willCreation' | 'cidUpload';
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 /**
- * Generate ZKP proof
- * This will load the circuit files and generate a proof
+ * Generate ZKP proof by calling the backend API
+ * This avoids loading multi-GB circuit files in the browser
  */
 export const generateProof = async (
   circuitName: CircuitName,
@@ -33,69 +37,31 @@ export const generateProof = async (
   onProgress?: (status: string, progress: number) => void
 ): Promise<Groth16Proof> => {
   try {
-    onProgress?.('Loading circuit files...', 10);
+    onProgress?.('Sending request to backend...', 10);
 
-    // Load WASM and zkey files from public directory
-    const wasmPath = `/zkp/${circuitName}/${circuitName}.wasm`;
-    const zkeyPath = `/zkp/${circuitName}/${circuitName}_0001.zkey`;
+    const response = await fetch(`${BACKEND_URL}/api/zkp/${circuitName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    });
 
-    onProgress?.('Downloading WASM...', 30);
-    const wasmResponse = await fetch(wasmPath);
-    if (!wasmResponse.ok) {
-      throw new Error(`Failed to load WASM file: ${wasmPath}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `HTTP ${response.status}`);
     }
-    const wasmBuffer = await wasmResponse.arrayBuffer();
 
-    onProgress?.('Downloading zkey...', 50);
-    const zkeyResponse = await fetch(zkeyPath);
-    if (!zkeyResponse.ok) {
-      throw new Error(`Failed to load zkey file: ${zkeyPath}`);
-    }
-    const zkeyBuffer = await zkeyResponse.arrayBuffer();
+    onProgress?.('Waiting for proof generation...', 50);
 
-    onProgress?.('Generating proof...', 70);
-
-    // Generate the proof
-    const { proof, publicSignals } = await groth16.fullProve(
-      input,
-      new Uint8Array(wasmBuffer),
-      new Uint8Array(zkeyBuffer)
-    );
+    const proof: Groth16Proof = await response.json();
 
     onProgress?.('Proof generated!', 100);
 
-    return {
-      proof: proof as any,
-      publicSignals,
-    };
+    return proof;
   } catch (error) {
     console.error('Failed to generate proof:', error);
     throw new Error(`ZKP generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-};
-
-/**
- * Verify ZKP proof (optional, for testing)
- */
-export const verifyProof = async (
-  circuitName: CircuitName,
-  proof: Groth16Proof
-): Promise<boolean> => {
-  try {
-    // Load verification key
-    const vkeyPath = `/zkp/${circuitName}/verification_key.json`;
-    const vkeyResponse = await fetch(vkeyPath);
-    if (!vkeyResponse.ok) {
-      throw new Error(`Failed to load verification key: ${vkeyPath}`);
-    }
-    const vkey = await vkeyResponse.json();
-
-    // Verify the proof
-    const isValid = await groth16.verify(vkey, proof.publicSignals, proof.proof);
-    return isValid;
-  } catch (error) {
-    console.error('Failed to verify proof:', error);
-    return false;
   }
 };
 

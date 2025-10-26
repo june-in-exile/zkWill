@@ -8,12 +8,15 @@
 node_modules/
 .pnpm-store/
 .pnpm-debug.log*
+.pnp/
+.pnp.js
 
 # =============================================================================
 # BUILD OUTPUTS
 # =============================================================================
 dist/
 dist-ssr/
+build/
 .vite/
 .next/
 cache/
@@ -59,6 +62,7 @@ lerna-debug.log*
 Thumbs.db
 *.icloud
 *.claude
+*.pem
 * 2.*
 * 3.*
 * 4.*

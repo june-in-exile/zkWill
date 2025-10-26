@@ -52,11 +52,8 @@ export const exportKey = async (key: CryptoKey): Promise<Uint8Array> => {
 export const importKey = async (keyData: Uint8Array): Promise<CryptoKey> => {
   return await crypto.subtle.importKey(
     'raw',
-    keyData,
-    {
-      name: 'AES-CTR',
-      length: 256,
-    },
+    keyData as BufferSource,
+    { name: 'AES-CTR' },
     true,
     ['encrypt', 'decrypt']
   );
@@ -75,9 +72,9 @@ export const encrypt = async (
       name: 'AES-CTR',
       counter: iv,
       length: 128,
-    },
+    } as AesCtrParams,
     key,
-    plaintext
+    plaintext as BufferSource
   );
 
   return {
@@ -99,9 +96,9 @@ export const decrypt = async (
       name: 'AES-CTR',
       counter: iv,
       length: 128,
-    },
+    } as AesCtrParams,
     key,
-    ciphertext
+    ciphertext as BufferSource
   );
 
   return new Uint8Array(decrypted);

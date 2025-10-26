@@ -2,6 +2,56 @@
 
 This guide explains how to use the backend components of the Will system for encrypting, uploading, and managing will files.
 
+## Two Usage Modes
+
+The backend can be used in two ways:
+
+### 1. **API Server Mode** (For Frontend Integration)
+
+The backend provides an Express API server that the frontend uses for computationally intensive operations like ZKP proof generation.
+
+**Start the API server:**
+
+```bash
+pnpm dev
+```
+
+This starts the server on the port specified in `.env` (default: 3001).
+
+**Available Endpoints:**
+
+- `POST /api/zkp/cidUpload` - Generate ZKP proof for CID upload verification
+- `POST /api/zkp/willCreation` - Generate ZKP proof for will creation verification
+
+**Request Body Format:**
+
+```json
+{
+  "ciphertext": [/* array of numbers */],
+  "key": [/* array of numbers */],
+  "iv": [/* array of numbers */]
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "proof": {
+    "pi_a": ["...", "..."],
+    "pi_b": [["...", "..."], ["...", "..."]],
+    "pi_c": ["...", "..."],
+    "protocol": "groth16",
+    "curve": "bn128"
+  },
+  "publicSignals": ["..."]
+}
+```
+
+### 2. **CLI Mode** (For Testing & Manual Operations)
+
+Use Make commands to run the complete workflow manually. This is useful for testing, development, and understanding the system flow.
+
 ## Workflow Overview
 
 The system follows a four-phase workflow with distinct roles:
@@ -14,7 +64,7 @@ The system follows a four-phase workflow with distinct roles:
 ## Prerequisites
 
 1. **Environment Configuration**: Ensure the `.env` file is properly configured with all required variables.
-2. **IPFS Daemon**: Start the IPFS daemon for file storage operations.
+2. **IPFS Daemon**: Start the IPFS daemon for file storage operations (for CLI mode).
 
 ## Initialization
 

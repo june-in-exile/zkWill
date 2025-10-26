@@ -39,7 +39,7 @@ React + TypeScript + Vite frontend for the Web3 Will System.
 - **Wallet Integration**: MetaMask and Web3 wallet support via ethers.js
 - **Client-Side Encryption**: Web Crypto API for AES-256-CTR encryption
 - **IPFS Storage**: Helia for browser-based IPFS operations
-- **Zero-Knowledge Proofs**: snarkjs for in-browser proof generation (demo only)
+- **Zero-Knowledge Proofs**: Backend API for proof generation (see backend server)
 - **Smart Contract Interaction**: Direct blockchain interactions from frontend
 
 ## Project Structure
@@ -63,7 +63,7 @@ src/
 │   ├── cryptography/    # Crypto utilities (Web Crypto API)
 │   ├── ipfs/            # IPFS utilities (Helia)
 │   ├── contract/        # Contract interaction utilities
-│   └── zkp/             # ZKP generation (snarkjs)
+│   └── zkp/             # ZKP API client (calls backend)
 ├── hooks/
 │   └── useWallet.ts     # Wallet connection hook
 ├── types/
@@ -79,6 +79,7 @@ src/
 - Node.js 18+
 - pnpm
 - MetaMask or compatible Web3 wallet
+- **Backend server running** (see `apps/backend` directory)
 
 ### Installation
 
@@ -92,6 +93,8 @@ pnpm dev
 
 The app will be available at http://localhost:5173
 
+**Important**: Make sure the backend server is running on the configured port (default: 3001) for ZKP proof generation to work.
+
 ### Build
 
 ```bash
@@ -104,24 +107,15 @@ pnpm build
 pnpm lint
 ```
 
-## ZKP Circuit Files
+## Backend Dependency
 
-For ZKP proof generation to work, you need to place the compiled circuit files in the `public/zkp/` directory:
+This frontend requires the **backend API server** to be running for zero-knowledge proof generation.
 
-```
-public/
-└── zkp/
-    ├── willCreation/
-    │   ├── willCreation.wasm
-    │   ├── willCreation_0001.zkey
-    │   └── verification_key.json
-    └── cidUpload/
-        ├── cidUpload.wasm
-        ├── cidUpload_0001.zkey
-        └── verification_key.json
-```
+The backend handles computationally intensive ZKP generation, avoiding multi-GB circuit file downloads in the browser. See the `apps/backend` directory for setup instructions.
 
-These files should be copied from the `zkp/circuits/` directory after running circuit compilation.
+**Backend Configuration:**
+
+The backend URL is configured via the `BACKEND_PORT` environment variable in the root `.env` file (default: 3001).
 
 ## Important Notes
 
@@ -129,14 +123,19 @@ These files should be copied from the `zkp/circuits/` directory after running ci
 
 ⚠️ **This is a Demo Implementation**
 
-For demonstration purposes, this frontend generates zero-knowledge proofs **directly in the browser** using snarkjs. This approach has several limitations:
+For demonstration purposes, this frontend **delegates ZKP proof generation to a backend API server** instead of generating proofs in the browser. This avoids downloading multi-GB circuit files (e.g., 3.5 GB for cidUpload) and provides better performance.
 
-**Demo Limitations:**
+**Current Architecture:**
 
-- **Performance**: Proof generation can take 5-15 minutes and freezes the browser UI
-- **Memory**: Requires significant RAM (2GB+ recommended)
-- **User Experience**: Browser becomes unresponsive during proof generation
-- **Security**: Client-side computation exposes circuit details
+```
+Frontend (Browser)
+  ↓ (encrypted inputs)
+Backend API Server
+  ↓ (generates proof using snarkjs CLI)
+Frontend (Browser)
+  ↓ (proof + public signals)
+Blockchain (Smart Contract)
+```
 
 **Production Recommendation:**
 
@@ -151,9 +150,10 @@ In a production environment, **proof generation should be outsourced to trusted 
    - Use dedicated proof generation services (e.g., Marlin, RISC Zero)
    - Distribute computational load across multiple nodes
 
-3. **Backend Proof Service**:
-   - User submits encrypted inputs to a trusted backend
-   - Backend generates proof and returns it to the client
+3. **Backend Proof Service with TEE**:
+   - Replace the demo backend with a TEE-based proof generation service
+   - User submits encrypted inputs to a TEE node
+   - TEE generates proof securely and returns it to the client
    - Client verifies and submits to blockchain
 
 **Recommended Architecture for Production:**
@@ -161,14 +161,14 @@ In a production environment, **proof generation should be outsourced to trusted 
 ```
 User (Frontend)
   ↓ (encrypted inputs)
-TEE Node / Proof Service
-  ↓ (ZKP proof)
+TEE Node / Decentralized Proof Service
+  ↓ (ZKP proof generated in isolated environment)
 User (Frontend)
   ↓ (proof + public signals)
 Blockchain (Smart Contract)
 ```
 
-This approach maintains privacy while providing better performance and user experience.
+The current implementation provides a foundation for this architecture, where the backend server can be replaced with a TEE-based service for production use.
 
 ### Security Considerations
 
@@ -182,16 +182,9 @@ This approach maintains privacy while providing better performance and user expe
 
 - Modern browsers with Web Crypto API support
 - MetaMask or compatible Web3 wallet extension
-- Sufficient memory for ZKP operations (2GB+ recommended)
 
 ### Known Limitations
 
-- ZKP generation runs on main thread (blocks UI)
-- IPFS files are not pinned permanently
-- No contract addresses configured (TODO)
-- Mock data for pending/notarized wills (TODO: fetch from contract)
-
-## Future Improvements
-
-- [ ] Implement Web Workers for better UI responsiveness
-- [ ] Add contract interaction logic
+- Requires backend server for ZKP generation (see `apps/backend`)
+- IPFS files are not pinned permanently (local Helia storage)
+- Mock data for pending/notarized wills (TODO: fetch from contract events)

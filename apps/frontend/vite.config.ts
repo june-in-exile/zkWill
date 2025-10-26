@@ -46,11 +46,9 @@ export default defineConfig({
     'import.meta.env.VITE_JSON_CID_VERIFIER': JSON.stringify(rootEnv.JSON_CID_VERIFIER || ''),
     'import.meta.env.VITE_CHAIN_ID': JSON.stringify('31337'),
     'import.meta.env.VITE_RPC_URL': JSON.stringify(rootEnv.ANVIL_RPC_URL || 'http://127.0.0.1:8545'),
+    'import.meta.env.VITE_BACKEND_URL': JSON.stringify(`http://localhost:${rootEnv.BACKEND_PORT || '3001'}`),
   },
   server: {
     port: 5173,
-  },
-  optimizeDeps: {
-    exclude: ['snarkjs'],
   },
 });
