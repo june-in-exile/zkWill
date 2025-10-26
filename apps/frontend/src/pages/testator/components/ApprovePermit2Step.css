@@ -4,11 +4,12 @@
 }
 
 .info-box {
-  background: #e3f2fd;
+  background: #1e3a5f;
   border-left: 4px solid #2196f3;
   padding: 1rem;
   margin: 1rem 0;
   border-radius: 4px;
+  color: #e3f2fd;
 }
 
 .info-box p {
@@ -100,6 +101,7 @@
 .loading {
   text-align: center;
   padding: 2rem;
+  animation: none; /* Override global .loading animation */
 }
 
 .spinner {

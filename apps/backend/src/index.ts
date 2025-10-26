@@ -7,8 +7,9 @@ import {
   generateInitializationVector,
   generateSalt,
   encrypt,
-  decrypt
-} from '@shared/utils/cryptography/index.js';
+  decrypt,
+  serializeWillToHex
+} from '@shared/utils/index.js';
 import { CRYPTO_CONFIG } from '@config';
 import type { Groth16Proof, SignedWill } from '@shared/types/index.js';
 
@@ -91,36 +92,6 @@ app.post('/api/zkp/willCreation', async (req: Request, res: Response) => {
 // ============================================================================
 // Cryptography Routes
 // ============================================================================
-
-/**
- * Serialize SignedWill to hex string
- */
-function serializeWillToHex(signedWill: SignedWill): string {
-  const FIELD_HEX_LENGTH = {
-    AMOUNT: 64,
-    SALT: 64,
-    NONCE: 32,
-    SIGNATURE: 130
-  };
-
-  let hex = "";
-  hex += signedWill.testator.slice(2);
-  hex += signedWill.executor.slice(2);
-
-  for (const estate of signedWill.estates) {
-    hex += estate.beneficiary.slice(2);
-    hex += estate.token.slice(2);
-    hex += BigInt(estate.amount).toString(16).padStart(FIELD_HEX_LENGTH.AMOUNT, "0");
-  }
-
-  hex += BigInt(signedWill.salt).toString(16).padStart(FIELD_HEX_LENGTH.SALT, "0");
-  hex += signedWill.will.slice(2);
-  hex += BigInt(signedWill.permit2.nonce).toString(16).padStart(FIELD_HEX_LENGTH.NONCE, "0");
-  hex += signedWill.permit2.deadline.toString(16).padStart(16, "0");
-  hex += signedWill.permit2.signature.slice(2).padStart(FIELD_HEX_LENGTH.SIGNATURE, "0");
-
-  return hex;
-}
 
 app.post('/api/crypto/encrypt', async (req: Request, res: Response) => {
   try {

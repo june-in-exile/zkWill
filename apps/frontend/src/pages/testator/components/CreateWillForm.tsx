@@ -7,10 +7,35 @@ interface Props {
 }
 
 const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
-  const [executor, setExecutor] = useState('');
-  const [beneficiaries, setBeneficiaries] = useState([
-    { address: '', token: '', amount: '' },
-  ]);
+  // Load default values from environment
+  const defaultExecutor = import.meta.env.VITE_DEFAULT_EXECUTOR || '';
+  const defaultBeneficiaries: Array<{ address: string; token: string; amount: string }> = [];
+
+  // Add first beneficiary if available
+  if (import.meta.env.VITE_DEFAULT_BENEFICIARY0) {
+    defaultBeneficiaries.push({
+      address: import.meta.env.VITE_DEFAULT_BENEFICIARY0 || '',
+      token: import.meta.env.VITE_DEFAULT_TOKEN0 || '',
+      amount: import.meta.env.VITE_DEFAULT_AMOUNT0 || '',
+    });
+  }
+
+  // Add second beneficiary if available
+  if (import.meta.env.VITE_DEFAULT_BENEFICIARY1) {
+    defaultBeneficiaries.push({
+      address: import.meta.env.VITE_DEFAULT_BENEFICIARY1 || '',
+      token: import.meta.env.VITE_DEFAULT_TOKEN1 || '',
+      amount: import.meta.env.VITE_DEFAULT_AMOUNT1 || '',
+    });
+  }
+
+  // If no defaults found, add one empty beneficiary
+  if (defaultBeneficiaries.length === 0) {
+    defaultBeneficiaries.push({ address: '', token: '', amount: '' });
+  }
+
+  const [executor, setExecutor] = useState(defaultExecutor);
+  const [beneficiaries, setBeneficiaries] = useState(defaultBeneficiaries);
 
   const addBeneficiary = () => {
     setBeneficiaries([...beneficiaries, { address: '', token: '', amount: '' }]);

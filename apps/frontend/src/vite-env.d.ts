@@ -9,6 +9,13 @@ interface ImportMetaEnv {
   readonly VITE_CHAIN_ID: string
   readonly VITE_RPC_URL: string
   readonly VITE_BACKEND_URL: string
+  readonly VITE_DEFAULT_EXECUTOR: string
+  readonly VITE_DEFAULT_BENEFICIARY0: string
+  readonly VITE_DEFAULT_TOKEN0: string
+  readonly VITE_DEFAULT_AMOUNT0: string
+  readonly VITE_DEFAULT_BENEFICIARY1: string
+  readonly VITE_DEFAULT_TOKEN1: string
+  readonly VITE_DEFAULT_AMOUNT1: string
 }
 
 interface ImportMeta {

@@ -62,7 +62,7 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
 
       // Step 2: Predict Will contract address
       setProgress('Predicting Will contract address...');
-      const willAddress = await predictWillAddress(salt, willData.testator, provider);
+      const willAddress = await predictWillAddress(salt, willData, provider);
       console.log('Predicted Will address:', willAddress);
 
       // Step 3: Generate Permit2 signature (requires user wallet signature)

@@ -4,6 +4,7 @@
 
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESSES } from '@/config/contracts';
+import type { WillData } from '@/pages/testator/TestatorPage';
 
 // Note: generateSalt is now provided by backend API via utils/api/client.ts
 
@@ -13,20 +14,29 @@ import { CONTRACT_ADDRESSES } from '@/config/contracts';
  */
 export const predictWillAddress = async (
   salt: bigint,
-  testatorAddress: string,
+  willData: WillData,
   provider: ethers.BrowserProvider
 ): Promise<string> => {
   const willFactory = new ethers.Contract(
     CONTRACT_ADDRESSES.WILL_FACTORY,
     [
-      'function getWillAddress(bytes32 salt, address testator) public view returns (address)',
+      'function predictWill(address _testator, address _executor, tuple(address beneficiary, address token, uint256 amount)[] estates, uint256 _salt) external view returns (address)',
     ],
     provider
   );
 
-  const willAddress = await willFactory.getWillAddress(
-    ethers.toBeHex(salt, 32),
-    testatorAddress
+  // Convert beneficiaries to estates format
+  const estates = willData.beneficiaries.map((b) => ({
+    beneficiary: b.address,
+    token: b.token,
+    amount: b.amount,
+  }));
+
+  const willAddress = await willFactory.predictWill(
+    willData.testator,
+    willData.executor,
+    estates,
+    salt
   );
 
   return willAddress;
