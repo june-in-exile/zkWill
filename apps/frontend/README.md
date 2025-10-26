@@ -1,125 +1,99 @@
 # Frontend Application
 
-React + TypeScript + Vite frontend for the Web3 Will System.
+React + TypeScript + Vite frontend for the Web3 Will System using a **hybrid architecture** that combines client-side wallet operations with server-side heavy computations.
 
-## Features
+## Architecture Overview (Hybrid Approach)
 
-### Role-Based Interfaces
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Frontend (Browser)                   │
+│                                                         │
+│  ┌─────────────────────┐     ┌─────────────────────┐    │
+│  │  MetaMask Wallet    │     │  Backend API        │    │
+│  │  (User Controls)    │     │  (Heavy Compute)    │    │
+│  ├─────────────────────┤     ├─────────────────────┤    │
+│  │ • Sign Transactions │     │ • Encryption        │    │
+│  │ • Token Approval    │     │ • Serialization     │    │
+│  │ • Permit2 Signature │     │ • ZKP Generation    │    │
+│  │ • Send Transactions │     │ • Salt Generation   │    │
+│  └─────────────────────┘     └─────────────────────┘    │
+│           ↓                            ↓                │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │           Frontend Components                     │  │
+│  │  • CreateWillForm  • ApprovePermit2Step           │  │
+│  │  • EncryptStep     • UploadIPFSStep               │  │
+│  │  • SubmitCIDStep   • ExecutorPage                 │  │
+│  └───────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+                         ↓
+                 Arbitrum Sepolia
+```
 
-#### Testator
+## Role-Based Interfaces
+
+### Testator
 
 - Create will with beneficiaries and asset distribution
-- Encrypt will with AES-256-CTR (Web Crypto API)
-- Generate zero-knowledge proof for CID upload
-- Upload encrypted will to IPFS (Helia)
-- Submit CID to WillFactory contract
+- Approve ERC20 tokens for Permit2 (MetaMask)
+- Sign Permit2 signature for transfers (MetaMask)
+- Encrypt will via backend API (AES-256-GCM)
+- Upload encrypted will to IPFS (browser Helia)
+- Generate ZKP proof via backend API
+- Submit CID to WillFactory contract (MetaMask)
 
-#### Notary
+### Notary
 
 - View pending uploaded wills
 - Notarize CIDs to establish legal validity
 - Track notarization history
 
-#### Oracle
+### Oracle
 
 - View notarized wills
 - Probate wills after death confirmation
 - Authorize executor to proceed
 
-#### Executor
+### Executor
 
 - Download encrypted will from IPFS
-- Decrypt will with provided key
-- Generate zero-knowledge proof for will creation
-- Create Will contract via WillFactory
-- Execute asset transfers to beneficiaries
-
-### Technical Features
-
-- **Wallet Integration**: MetaMask and Web3 wallet support via ethers.js
-- **Client-Side Encryption**: Web Crypto API for AES-256-CTR encryption
-- **IPFS Storage**: Helia for browser-based IPFS operations
-- **Zero-Knowledge Proofs**: Backend API for proof generation (see backend server)
-- **Smart Contract Interaction**: Direct blockchain interactions from frontend
-
-## Project Structure
-
-```
-src/
-├── components/
-│   ├── wallet/          # Wallet connection
-│   ├── common/          # Shared components (Layout, etc.)
-│   ├── contract/        # Contract interaction components
-│   ├── crypto/          # Crypto-related components
-│   ├── ipfs/            # IPFS components
-│   └── zkp/             # ZKP components
-├── pages/
-│   ├── HomePage.tsx     # Landing page
-│   ├── testator/        # Testator interface
-│   ├── notary/          # Notary interface
-│   ├── oracle/          # Oracle interface
-│   └── executor/        # Executor interface
-├── utils/
-│   ├── cryptography/    # Crypto utilities (Web Crypto API)
-│   ├── ipfs/            # IPFS utilities (Helia)
-│   ├── contract/        # Contract interaction utilities
-│   └── zkp/             # ZKP API client (calls backend)
-├── hooks/
-│   └── useWallet.ts     # Wallet connection hook
-├── types/
-│   └── global.d.ts      # TypeScript type definitions
-└── styles/
-    └── index.css        # Global styles
-```
+- Decrypt will via backend API
+- Generate ZKP proof via backend API
+- Create Will contract via WillFactory (MetaMask)
+- Execute asset transfers to beneficiaries (MetaMask)
 
 ## Development
 
 ### Prerequisites
 
 - Node.js 18+
-- pnpm
-- MetaMask or compatible Web3 wallet
-- **Backend server running** (see `apps/backend` directory)
+- npm or pnpm
+- MetaMask wallet
+- **Backend server running** (see `apps/backend` - required for encryption & ZKP)
 
-### Installation
+### Environment Configuration
 
-```bash
-# Install dependencies
-pnpm install
+Create `.env` in `apps/frontend/`:
 
-# Start development server
-pnpm dev
+```env
+# Network Configuration
+VITE_CHAIN_ID=421614
+VITE_RPC_URL=https://arb-sepolia.g.alchemy.com/v2/YOUR_KEY
+VITE_NETWORK_NAME=Arbitrum Sepolia
+VITE_CURRENCY_SYMBOL=ETH
+VITE_BLOCK_EXPLORER=https://sepolia.arbiscan.io
+
+# Backend API
+VITE_BACKEND_URL=http://localhost:3001
+
+# Contract Addresses (deployed on Arbitrum Sepolia)
+VITE_PERMIT2=0x000000000022D473030F116dDEE9F6B43aC78BA3
+VITE_WILL_FACTORY=<your_deployed_factory>
+VITE_CID_UPLOAD_VERIFIER=<your_deployed_verifier>
+VITE_WILL_CREATION_VERIFIER=<your_deployed_verifier>
+VITE_JSON_CID_VERIFIER=<your_deployed_verifier>
 ```
 
-The app will be available at http://localhost:5173
-
-**Important**: Make sure the backend server is running on the configured port (default: 3001) for ZKP proof generation to work.
-
-### Build
-
-```bash
-pnpm build
-```
-
-### Lint
-
-```bash
-pnpm lint
-```
-
-## Backend Dependency
-
-This frontend requires the **backend API server** to be running for zero-knowledge proof generation.
-
-The backend handles computationally intensive ZKP generation, avoiding multi-GB circuit file downloads in the browser. See the `apps/backend` directory for setup instructions.
-
-**Backend Configuration:**
-
-The backend URL is configured via the `BACKEND_PORT` environment variable in the root `.env` file (default: 3001).
-
-## Important Notes
-
-### Zero-Knowledge Proof Generation (Demo vs Production)
+## Zero-Knowledge Proof Generation (Demo vs Production)
 
 ⚠️ **This is a Demo Implementation**
 
@@ -155,36 +129,3 @@ In a production environment, **proof generation should be outsourced to trusted 
    - User submits encrypted inputs to a TEE node
    - TEE generates proof securely and returns it to the client
    - Client verifies and submits to blockchain
-
-**Recommended Architecture for Production:**
-
-```
-User (Frontend)
-  ↓ (encrypted inputs)
-TEE Node / Decentralized Proof Service
-  ↓ (ZKP proof generated in isolated environment)
-User (Frontend)
-  ↓ (proof + public signals)
-Blockchain (Smart Contract)
-```
-
-The current implementation provides a foundation for this architecture, where the backend server can be replaced with a TEE-based service for production use.
-
-### Security Considerations
-
-1. **Encryption Keys**: When the testator encrypts a will, the key is downloaded as a file. This key must be securely transmitted to the executor off-chain.
-
-2. **IPFS Storage**: This demo uses local Helia nodes. Files are stored temporarily and may not persist across sessions. In production, use pinning services or decentralized storage solutions.
-
-3. **Private Keys**: Never store private keys in the frontend code or local storage. Always use wallet providers like MetaMask.
-
-### Browser Compatibility
-
-- Modern browsers with Web Crypto API support
-- MetaMask or compatible Web3 wallet extension
-
-### Known Limitations
-
-- Requires backend server for ZKP generation (see `apps/backend`)
-- IPFS files are not pinned permanently (local Helia storage)
-- Mock data for pending/notarized wills (TODO: fetch from contract events)

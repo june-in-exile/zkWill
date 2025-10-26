@@ -14,6 +14,9 @@ export const CONTRACT_ADDRESSES = {
 export const NETWORK_CONFIG = {
   CHAIN_ID: Number(import.meta.env.VITE_CHAIN_ID) || 31337,
   RPC_URL: import.meta.env.VITE_RPC_URL || 'http://127.0.0.1:8545',
+  NETWORK_NAME: import.meta.env.VITE_NETWORK_NAME || 'Arbitrum Sepolia',
+  CURRENCY_SYMBOL: import.meta.env.VITE_CURRENCY_SYMBOL || 'ETH',
+  BLOCK_EXPLORER: import.meta.env.VITE_BLOCK_EXPLORER || 'https://sepolia.arbiscan.io',
 } as const;
 
 // Validate that all required addresses are set

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useWallet } from '@hooks/useWallet';
 import CreateWillForm from './components/CreateWillForm';
+import ApprovePermit2Step from './components/ApprovePermit2Step';
 import EncryptStep from './components/EncryptStep';
 import UploadIPFSStep from './components/UploadIPFSStep';
 import SubmitCIDStep from './components/SubmitCIDStep';
@@ -28,19 +29,30 @@ const TestatorPage: React.FC = () => {
   const [encryptedData, setEncryptedData] = useState<EncryptedData | null>(null);
   const [cid, setCid] = useState<string | null>(null);
 
+  // Extract unique token addresses from will data
+  const tokenAddresses = useMemo(() => {
+    if (!willData) return [];
+    const tokens = willData.beneficiaries.map((b) => b.token);
+    return [...new Set(tokens)]; // Remove duplicates
+  }, [willData]);
+
   const handleWillCreated = (data: WillData) => {
     setWillData(data);
-    setCurrentStep(2);
+    setCurrentStep(2); // Go to Approve Permit2 step
+  };
+
+  const handlePermit2Approved = () => {
+    setCurrentStep(3); // Go to Encrypt step
   };
 
   const handleEncrypted = (data: EncryptedData) => {
     setEncryptedData(data);
-    setCurrentStep(3);
+    setCurrentStep(4);
   };
 
   const handleUploaded = (uploadedCid: string) => {
     setCid(uploadedCid);
-    setCurrentStep(4);
+    setCurrentStep(5);
   };
 
   const handleSubmitted = () => {
@@ -84,14 +96,18 @@ const TestatorPage: React.FC = () => {
         </div>
         <div className={`step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
           <div className="step-number">2</div>
-          <div className="step-label">Encrypt</div>
+          <div className="step-label">Approve Permit2</div>
         </div>
         <div className={`step ${currentStep >= 3 ? 'active' : ''} ${currentStep > 3 ? 'completed' : ''}`}>
           <div className="step-number">3</div>
-          <div className="step-label">Upload IPFS</div>
+          <div className="step-label">Encrypt</div>
         </div>
         <div className={`step ${currentStep >= 4 ? 'active' : ''} ${currentStep > 4 ? 'completed' : ''}`}>
           <div className="step-number">4</div>
+          <div className="step-label">Upload IPFS</div>
+        </div>
+        <div className={`step ${currentStep >= 5 ? 'active' : ''} ${currentStep > 5 ? 'completed' : ''}`}>
+          <div className="step-number">5</div>
           <div className="step-label">Submit CID</div>
         </div>
       </div>
@@ -101,12 +117,18 @@ const TestatorPage: React.FC = () => {
           <CreateWillForm testatorAddress={address!} onSubmit={handleWillCreated} />
         )}
         {currentStep === 2 && willData && (
+          <ApprovePermit2Step
+            tokenAddresses={tokenAddresses}
+            onApproved={handlePermit2Approved}
+          />
+        )}
+        {currentStep === 3 && willData && (
           <EncryptStep willData={willData} onEncrypted={handleEncrypted} />
         )}
-        {currentStep === 3 && encryptedData && (
+        {currentStep === 4 && encryptedData && (
           <UploadIPFSStep encryptedData={encryptedData} onUploaded={handleUploaded} />
         )}
-        {currentStep === 4 && cid && encryptedData && (
+        {currentStep === 5 && cid && encryptedData && (
           <SubmitCIDStep cid={cid} encryptedData={encryptedData} onSubmitted={handleSubmitted} />
         )}
       </div>

@@ -2,7 +2,15 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import cors from 'cors';
 import { generateZkpProof } from '@shared/utils/cryptography/zkp.js';
-import type { Groth16Proof } from '@shared/types/index.js';
+import {
+  generateKey,
+  generateInitializationVector,
+  generateSalt,
+  encrypt,
+  decrypt
+} from '@shared/utils/cryptography/index.js';
+import { CRYPTO_CONFIG } from '@config';
+import type { Groth16Proof, SignedWill } from '@shared/types/index.js';
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 3001;
@@ -80,10 +88,141 @@ app.post('/api/zkp/willCreation', async (req: Request, res: Response) => {
   }
 });
 
+// ============================================================================
+// Cryptography Routes
+// ============================================================================
+
+/**
+ * Serialize SignedWill to hex string
+ */
+function serializeWillToHex(signedWill: SignedWill): string {
+  const FIELD_HEX_LENGTH = {
+    AMOUNT: 64,
+    SALT: 64,
+    NONCE: 32,
+    SIGNATURE: 130
+  };
+
+  let hex = "";
+  hex += signedWill.testator.slice(2);
+  hex += signedWill.executor.slice(2);
+
+  for (const estate of signedWill.estates) {
+    hex += estate.beneficiary.slice(2);
+    hex += estate.token.slice(2);
+    hex += BigInt(estate.amount).toString(16).padStart(FIELD_HEX_LENGTH.AMOUNT, "0");
+  }
+
+  hex += BigInt(signedWill.salt).toString(16).padStart(FIELD_HEX_LENGTH.SALT, "0");
+  hex += signedWill.will.slice(2);
+  hex += BigInt(signedWill.permit2.nonce).toString(16).padStart(FIELD_HEX_LENGTH.NONCE, "0");
+  hex += signedWill.permit2.deadline.toString(16).padStart(16, "0");
+  hex += signedWill.permit2.signature.slice(2).padStart(FIELD_HEX_LENGTH.SIGNATURE, "0");
+
+  return hex;
+}
+
+app.post('/api/crypto/encrypt', async (req: Request, res: Response) => {
+  try {
+    const { signedWill } = req.body as { signedWill: SignedWill };
+
+    if (!signedWill) {
+      res.status(400).json({ error: 'Missing required field: signedWill' });
+      return;
+    }
+
+    console.log(`\n🔐 Encrypting will data...`);
+
+    // Serialize will to hex
+    let hexString = serializeWillToHex(signedWill);
+    if (hexString.length % 2 === 1) {
+      hexString += '0';
+    }
+
+    const plaintext = Buffer.from(hexString, 'hex');
+    const key = generateKey();
+    const iv = generateInitializationVector();
+
+    const result = encrypt(CRYPTO_CONFIG.algorithm, plaintext, key, iv);
+
+    const encryptedWill = {
+      algorithm: CRYPTO_CONFIG.algorithm,
+      iv: Array.from(iv),
+      authTag: "authTag" in result ? Array.from(result.authTag) : Array.from(Buffer.alloc(0)),
+      ciphertext: Array.from(result.ciphertext),
+      timestamp: Math.floor(Date.now() / 1000),
+      key: Array.from(key) // Return key to frontend
+    };
+
+    console.log(`✅ Will encrypted successfully\n`);
+    res.json(encryptedWill);
+  } catch (error) {
+    console.error('❌ Encryption failed:', error);
+    res.status(500).json({
+      error: 'Encryption failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+app.post('/api/crypto/decrypt', async (req: Request, res: Response) => {
+  try {
+    const { ciphertext, key, iv, algorithm } = req.body;
+
+    if (!ciphertext || !key || !iv) {
+      res.status(400).json({ error: 'Missing required fields: ciphertext, key, iv' });
+      return;
+    }
+
+    console.log(`\n🔓 Decrypting will data...`);
+
+    const ciphertextBuffer = Buffer.from(ciphertext);
+    const keyBuffer = Buffer.from(key);
+    const ivBuffer = Buffer.from(iv);
+
+    const plaintext = decrypt(
+      algorithm || CRYPTO_CONFIG.algorithm,
+      ciphertextBuffer,
+      keyBuffer,
+      ivBuffer
+    );
+
+    console.log(`✅ Will decrypted successfully\n`);
+    res.json({
+      plaintext: Array.from(plaintext),
+      hex: plaintext.toString('hex')
+    });
+  } catch (error) {
+    console.error('❌ Decryption failed:', error);
+    res.status(500).json({
+      error: 'Decryption failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// ============================================================================
+// Utility Routes
+// ============================================================================
+
+app.get('/api/utils/generate-salt', (_req: Request, res: Response) => {
+  try {
+    const salt = generateSalt();
+    res.json({ salt: salt.toString() });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Salt generation failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`\n🚀 Backend server running on http://localhost:${PORT}`);
-  console.log(`🔐 ZKP endpoints: http://localhost:${PORT}/api/zkp/*\n`);
+  console.log(`🔐 Crypto endpoints: http://localhost:${PORT}/api/crypto/*`);
+  console.log(`🔐 ZKP endpoints: http://localhost:${PORT}/api/zkp/*`);
+  console.log(`🛠️  Utility endpoints: http://localhost:${PORT}/api/utils/*\n`);
 });
 
 export default app;

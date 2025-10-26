@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
-import { generateProof, formatProofForContract } from '@utils/zkp/snarkjs';
+import { generateCidUploadProof } from '@utils/api/client';
 import { uploadCid } from '@utils/contract/willFactory';
 import { useWallet } from '@hooks/useWallet';
 import type { EncryptedData } from '../TestatorPage';
+
+// Format ZKP proof from backend for contract submission
+function formatProofForContract(proof: any) {
+  return {
+    a: proof.proof.pi_a.slice(0, 2),
+    b: proof.proof.pi_b.slice(0, 2).map((arr: string[]) => arr.slice(0, 2)),
+    c: proof.proof.pi_c.slice(0, 2),
+    publicSignals: proof.publicSignals,
+  };
+}
 
 interface Props {
   cid: string;
@@ -24,17 +34,17 @@ const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, onSubmitted }) => 
     setError(null);
 
     try {
-      const zkpInput = {
-        ciphertext: encryptedData.encrypted.ciphertext,
-        key: Array.from(encryptedData.key),
-        iv: encryptedData.encrypted.iv,
-      };
+      setStatus('Sending data to backend for ZKP generation...');
+      setProgress(10);
 
-      const generatedProof = await generateProof('cidUpload', zkpInput, (s, p) => {
-        setStatus(s);
-        setProgress(p);
-      });
+      const generatedProof = await generateCidUploadProof(
+        encryptedData.encrypted.ciphertext,
+        Array.from(encryptedData.key),
+        encryptedData.encrypted.iv
+      );
 
+      setStatus('ZKP proof generated successfully!');
+      setProgress(100);
       setProof(generatedProof);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Proof generation failed');
