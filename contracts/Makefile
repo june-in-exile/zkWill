@@ -74,9 +74,9 @@ format:
 
 install:
 	@rm -rf lib
-	@forge install foundry-rs/forge-std --no-commit
-	@forge install OpenZeppelin/openzeppelin-contracts --no-commit
-	@forge install Uniswap/permit2 --no-commit
+	@forge install foundry-rs/forge-std
+	@forge install OpenZeppelin/openzeppelin-contracts
+	@forge install Uniswap/permit2
 
 build: sync
 	@forge build
@@ -199,7 +199,7 @@ deploy-willFactory-to-arb-sepolia:
 		script/WillFactory.s.sol:WillFactoryScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts WILL_FACTORY WillFactory $(CHAIN_ID)
 
-deploy-to-arb-sepolia: deploy-multiplier2verifier-to-arb-sepolia deploy-cidUploadVerifier-to-arb-sepolia deploy-willCreationVerifier-to-arb-sepolia deploy-jsonCidVerifier-to-arb-sepolia
+deploy-to-arb-sepolia: deploy-cidUploadVerifier-to-arb-sepolia deploy-willCreationVerifier-to-arb-sepolia deploy-jsonCidVerifier-to-arb-sepolia
 	@$(MAKE) deploy-willFactory-to-arb-sepolia
 
 # --------- Scripts for forked Arbitrun Sepolia ---------
@@ -254,7 +254,7 @@ deploy-willFactory-to-forked-arb-sepolia:
 		script/WillFactory.s.sol:WillFactoryScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts WILL_FACTORY WillFactory $(CHAIN_ID)
 
-deploy-to-forked-arb-sepolia: deploy-multiplier2verifier-to-forked-arb-sepolia deploy-cidUploadVerifier-to-forked-arb-sepolia deploy-willCreationVerifier-to-forked-arb-sepolia deploy-jsonCidVerifier-to-forked-arb-sepolia
+deploy-to-forked-arb-sepolia: deploy-cidUploadVerifier-to-forked-arb-sepolia deploy-willCreationVerifier-to-forked-arb-sepolia deploy-jsonCidVerifier-to-forked-arb-sepolia
 	@$(MAKE) deploy-willFactory-to-forked-arb-sepolia
 
 # ------------------ Call CID Verifier ------------------

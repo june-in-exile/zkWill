@@ -72,22 +72,20 @@ abstract contract TestHelpers is Test {
         uint256[2][2] memory pB;
         uint256[2] memory pC;
 
-        string memory pA0Str = abi.decode(vm.parseJson(proofJson, ".pi_a[0]"), (string));
-        string memory pA1Str = abi.decode(vm.parseJson(proofJson, ".pi_a[1]"), (string));
-        pA[0] = vm.parseUint(pA0Str);
-        pA[1] = vm.parseUint(pA1Str);
+        pA[0] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_a[0]"));
+        pA[1] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_a[1]"));
 
         // @note G2 point (pB) needs to swap the order
-        pB[0][0] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_b[0][1]"), (string)));
-        pB[0][1] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_b[0][0]"), (string)));
-        pB[1][0] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_b[1][1]"), (string)));
-        pB[1][1] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_b[1][0]"), (string)));
+        pB[0][0] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_b[0][1]"));
+        pB[0][1] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_b[0][0]"));
+        pB[1][0] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_b[1][1]"));
+        pB[1][1] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_b[1][0]"));
 
-        pC[0] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_c[0]"), (string)));
-        pC[1] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_c[1]"), (string)));
+        pC[0] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_c[0]"));
+        pC[1] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_c[1]"));
 
         // Parse public.json
-        string[] memory pubStringArray = abi.decode(vm.parseJson(publicJson), (string[]));
+        string[] memory pubStringArray = vm.parseJsonStringArray(publicJson, "$");
         require(pubStringArray.length == 310, "Public signals array must have exactly 310 elements");
 
         uint256[310] memory pubSignals;
@@ -114,20 +112,20 @@ abstract contract TestHelpers is Test {
         uint256[2][2] memory pB;
         uint256[2] memory pC;
 
-        pA[0] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_a[0]"), (string)));
-        pA[1] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_a[1]"), (string)));
+        pA[0] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_a[0]"));
+        pA[1] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_a[1]"));
 
         // @note G2 point (pB) needs to swap the order
-        pB[0][0] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_b[0][1]"), (string)));
-        pB[0][1] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_b[0][0]"), (string)));
-        pB[1][0] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_b[1][1]"), (string)));
-        pB[1][1] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_b[1][0]"), (string)));
+        pB[0][0] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_b[0][1]"));
+        pB[0][1] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_b[0][0]"));
+        pB[1][0] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_b[1][1]"));
+        pB[1][1] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_b[1][0]"));
 
-        pC[0] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_c[0]"), (string)));
-        pC[1] = vm.parseUint(abi.decode(vm.parseJson(proofJson, ".pi_c[1]"), (string)));
+        pC[0] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_c[0]"));
+        pC[1] = vm.parseUint(vm.parseJsonString(proofJson, ".pi_c[1]"));
 
         // Parse public.json
-        string[] memory pubStringArray = abi.decode(vm.parseJson(publicJson), (string[]));
+        string[] memory pubStringArray = vm.parseJsonStringArray(publicJson, "$");
         require(pubStringArray.length == 321, "Public signals array must have exactly 321 elements");
 
         uint256[321] memory pubSignals;

@@ -23,8 +23,6 @@ contract WillFactoryFuzzTest is TestHelpers {
     MockWillCreationVerifier mockWillCreationVerifier;
     MockJsonCidVerifier mockJsonCidVerifier;
 
-    // uint256 notaryPrivateKey = 0x1111111111111111111111111111111111111111111111111111111111111111;
-    // uint256 oraclePrivateKey = 0x2222222222222222222222222222222222222222222222222222222222222222;
     address notary = makeAddr("notary");
     address oracle = makeAddr("oracle");
     address executor = makeAddr("executor");
@@ -32,17 +30,21 @@ contract WillFactoryFuzzTest is TestHelpers {
     uint8 maxEstates = 2;
 
     JsonCidVerifier.TypedJsonObject willJson;
-    CidUploadProofData cidUploadProof = _getCidUploadProofFromFiles();
-    WillCreationProofData willCreationProof = _getWillCreationProofFromFiles();
+    CidUploadProofData cidUploadProof;
+    WillCreationProofData willCreationProof;
 
     function setUp() public {
-        // notary = vm.addr(notaryPrivateKey);
-        // oracle = vm.addr(oraclePrivateKey);
+        // Initialize test data from files first
+        willJson = _getEncryptedWillFromFile();
+        cidUploadProof = _getCidUploadProofFromFiles();
+        willCreationProof = _getWillCreationProofFromFiles();
 
+        // Create mock verifiers
         mockCidUploadVerifier = new MockCidUploadVerifier();
         mockWillCreationVerifier = new MockWillCreationVerifier();
         mockJsonCidVerifier = new MockJsonCidVerifier();
 
+        // Deploy the factory
         factory = new WillFactory(
             address(mockCidUploadVerifier),
             address(mockWillCreationVerifier),
@@ -52,10 +54,6 @@ contract WillFactoryFuzzTest is TestHelpers {
             permit2,
             maxEstates
         );
-
-        willJson = _getEncryptedWillFromFile();
-        cidUploadProof = _getCidUploadProofFromFiles();
-        willCreationProof = _getWillCreationProofFromFiles();
     }
 
     function test_PredictWill_DeterministicOutput(
