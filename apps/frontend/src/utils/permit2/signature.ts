@@ -10,19 +10,19 @@ import type { WillData } from '@pages/testator/TestatorPage';
 
 export interface PermittedToken {
   token: string;
-  amount: string | bigint;
+  amount: bigint;
 }
 
 export interface Permit2Data {
   permitted: PermittedToken[];
   spender: string; // Will contract address
-  nonce: string | bigint;
-  deadline: number;
+  nonce: bigint;
+  deadline: number; // Should be number, not bigint (matches backend)
 }
 
 export interface SignatureResult {
   nonce: bigint;
-  deadline: number;
+  deadline: number; // Should be number, not bigint (matches backend)
   signature: string;
 }
 
@@ -42,7 +42,7 @@ export const generateNonce = (): bigint => {
  */
 export const calculateDeadline = (durationMs: number = 100 * 365 * 24 * 60 * 60 * 1000): number => {
   const endTimeMs = Date.now() + durationMs;
-  return Math.floor(endTimeMs / 1000); // Convert to seconds
+  return Math.floor(endTimeMs / 1000); // Convert to seconds (matches backend)
 };
 
 /**
@@ -56,7 +56,7 @@ export const createPermitStructure = (
 ): Permit2Data => {
   const permitted: PermittedToken[] = willData.beneficiaries.map((beneficiary) => ({
     token: beneficiary.token,
-    amount: beneficiary.amount,
+    amount: BigInt(beneficiary.amount), // Ensure amount is bigint
   }));
 
   return {
@@ -73,39 +73,95 @@ export const createPermitStructure = (
  */
 export const signPermit2 = async (
   permit: Permit2Data,
-  signer: ethers.JsonRpcSigner
+  signer: ethers.JsonRpcSigner,
+  chainId?: number
 ): Promise<SignatureResult> => {
   try {
-    // Get chain ID
-    const provider = signer.provider;
-    const network = await provider.getNetwork();
-    const chainId = network.chainId;
+    // Get chain ID from parameter or provider
+    let resolvedChainId: number;
+    if (chainId !== undefined) {
+      resolvedChainId = chainId;
+    } else {
+      const provider = signer.provider;
+      const network = await provider.getNetwork();
+      resolvedChainId = Number(network.chainId);
+    }
 
     // Use Permit2 address from config, fallback to SDK default
     const permit2Address = CONTRACT_ADDRESSES.PERMIT2 || PERMIT2_ADDRESS;
 
     console.log('Generating Permit2 signature...');
-    console.log('Chain ID:', chainId.toString());
+    console.log('Chain ID:', resolvedChainId);
     console.log('Permit2 Address:', permit2Address);
     console.log('Spender (Will):', permit.spender);
     console.log('Tokens:', permit.permitted.length);
     console.log('Nonce:', permit.nonce.toString());
-    console.log('Deadline:', new Date(Number(permit.deadline) * 1000).toISOString());
+    console.log('Deadline:', permit.deadline);
+    console.log('Deadline (date):', new Date(permit.deadline * 1000).toISOString());
 
-    // Get EIP-712 typed data
+    // Get EIP-712 typed data from Permit2 SDK
+    // Pass chainId as number (SDK accepts both number and bigint)
     const { domain, types, values } = SignatureTransfer.getPermitData(
-      permit as any,
+      permit,
       permit2Address,
-      chainId
+      resolvedChainId
     );
 
-    // Sign using EIP-712
-    const signature = await signer.signTypedData(domain, types, values);
+    console.log('EIP-712 data generated');
+    console.log('Domain:', domain);
+    console.log('Values:', values);
 
-    console.log('Signature generated successfully!');
+    // Use window.ethereum directly for better compatibility with MetaMask
+    // This approach avoids ethers v5/v6 signer differences
+    const signerAddress = await signer.getAddress();
+
+    if (!window.ethereum) {
+      throw new Error('MetaMask not available');
+    }
+
+    console.log('Requesting signature from wallet (eth_signTypedData_v4)...');
+
+    // Construct EIP-712 message for eth_signTypedData_v4
+    // This is the standard MetaMask format
+    const typedData = {
+      types,
+      domain,
+      primaryType: 'PermitBatch', // Permit2 SDK uses PermitBatch for multiple tokens
+      message: values,
+    };
+
+    console.log('TypedData for signing:', JSON.stringify(typedData, (_key, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    , 2));
+
+    let signature: string;
+    try {
+      signature = (await window.ethereum.request({
+        method: 'eth_signTypedData_v4',
+        params: [
+          signerAddress,
+          JSON.stringify(typedData, (_key, value) =>
+            typeof value === 'bigint' ? value.toString() : value
+          ),
+        ],
+      })) as string;
+
+      console.log('Signature generated successfully!');
+    } catch (signError: any) {
+      console.error('Signature error:', signError);
+
+      // Check if it's a user rejection
+      if (signError.code === 'ACTION_REJECTED' || signError.code === 4001) {
+        throw new Error('User rejected the signature request');
+      }
+
+      throw new Error(
+        `Signature failed: ${signError.message || 'Unknown error'}`
+      );
+    }
 
     return {
-      nonce: BigInt(permit.nonce),
+      nonce: permit.nonce,
       deadline: permit.deadline,
       signature,
     };
@@ -124,7 +180,8 @@ export const signPermit2 = async (
 export const generateWillPermit2Signature = async (
   willData: WillData,
   willContractAddress: string,
-  signer: ethers.JsonRpcSigner
+  signer: ethers.JsonRpcSigner,
+  chainId?: number
 ): Promise<SignatureResult> => {
   // Generate nonce and deadline
   const nonce = generateNonce();
@@ -133,6 +190,6 @@ export const generateWillPermit2Signature = async (
   // Create permit structure
   const permit = createPermitStructure(willData, willContractAddress, nonce, deadline);
 
-  // Sign permit
-  return await signPermit2(permit, signer);
+  // Sign permit (pass chainId to avoid network call)
+  return await signPermit2(permit, signer, chainId);
 };

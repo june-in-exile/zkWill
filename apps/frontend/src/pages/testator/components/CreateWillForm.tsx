@@ -127,7 +127,7 @@ const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
       </div>
 
       <button type="submit" className="btn-primary">
-        Continue to Encryption
+        Continue to Approval
       </button>
     </form>
   );

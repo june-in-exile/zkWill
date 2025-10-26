@@ -98,10 +98,15 @@
   cursor: not-allowed;
 }
 
-.loading {
+.approve-permit2-step .loading {
+  display: block; /* Override global inline-block */
+  width: auto; /* Override global width */
+  height: auto; /* Override global height */
+  border: none; /* Override global border */
+  border-radius: 0; /* Override global border-radius */
   text-align: center;
   padding: 2rem;
-  animation: none; /* Override global .loading animation */
+  animation: none !important; /* Override global .loading animation */
 }
 
 .spinner {

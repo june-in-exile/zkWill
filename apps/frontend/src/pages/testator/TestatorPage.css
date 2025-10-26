@@ -91,12 +91,17 @@
 
 .step-label {
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .step.active .step-label {
   color: var(--primary-color);
   font-weight: 600;
+}
+
+.step.completed .step-label {
+  color: var(--success-color);
+  font-weight: 500;
 }
 
 .step-content {

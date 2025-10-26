@@ -269,7 +269,7 @@ const ApprovePermit2Step: React.FC<Props> = ({ tokenAddresses, onApproved }) => 
 
         {allApproved && (
           <button onClick={onApproved} className="btn-primary">
-            Continue to Create Will
+            Continue to Encryption
           </button>
         )}
       </div>

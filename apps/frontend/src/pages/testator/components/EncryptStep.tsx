@@ -38,7 +38,7 @@ interface Props {
 }
 
 const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
-  const { signer, provider } = useWallet();
+  const { signer, provider, chainId } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string>('');
@@ -67,7 +67,12 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
 
       // Step 3: Generate Permit2 signature (requires user wallet signature)
       setProgress('Generating Permit2 signature (please sign in wallet)...');
-      const permit2Data = await generateWillPermit2Signature(willData, willAddress, signer);
+      const permit2Data = await generateWillPermit2Signature(
+        willData,
+        willAddress,
+        signer,
+        chainId ?? undefined
+      );
       console.log('Permit2 signature generated');
       console.log('  Nonce:', permit2Data.nonce.toString());
       console.log('  Deadline:', new Date(permit2Data.deadline * 1000).toISOString());
@@ -87,7 +92,7 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
         will: willAddress,
         permit2: {
           nonce: permit2Data.nonce.toString(),
-          deadline: permit2Data.deadline,
+          deadline: permit2Data.deadline, // Already a number
           signature: permit2Data.signature,
         },
       };
@@ -161,7 +166,7 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
             <code>{willData.executor}</code>
           </div>
           <div className="preview-row">
-            <span className="label">Beneficiaries:</span>
+            <span className="label">Estates:</span>
             <span>{willData.beneficiaries.length}</span>
           </div>
         </div>
