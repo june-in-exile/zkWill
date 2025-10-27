@@ -10,7 +10,7 @@ import './TestatorPage.css';
 export interface WillData {
   testator: string;
   executor: string;
-  beneficiaries: Array<{
+  estates: Array<{
     address: string;
     token: string;
     amount: string;
@@ -32,7 +32,7 @@ const TestatorPage: React.FC = () => {
   // Extract unique token addresses from will data
   const tokenAddresses = useMemo(() => {
     if (!willData) return [];
-    const tokens = willData.beneficiaries.map((b) => b.token);
+    const tokens = willData.estates.map((b) => b.token);
     return [...new Set(tokens)]; // Remove duplicates
   }, [willData]);
 
@@ -113,23 +113,62 @@ const TestatorPage: React.FC = () => {
       </div>
 
       <div className="step-content">
-        {currentStep === 1 && (
-          <CreateWillForm testatorAddress={address!} onSubmit={handleWillCreated} />
+        {currentStep >= 1 && (
+          <div className={`step-section ${currentStep > 1 ? 'completed' : 'active'}`}>
+            <h3 className="step-section-title">Step 1: Create Will</h3>
+            {currentStep === 1 ? (
+              <CreateWillForm testatorAddress={address!} onSubmit={handleWillCreated} />
+            ) : (
+              <div className="step-completed-summary">
+                <p>✓ Will created with {willData?.estates.length} beneficiary(ies)</p>
+              </div>
+            )}
+          </div>
         )}
-        {currentStep === 2 && willData && (
-          <ApprovePermit2Step
-            tokenAddresses={tokenAddresses}
-            onApproved={handlePermit2Approved}
-          />
+        {currentStep >= 2 && willData && (
+          <div className={`step-section ${currentStep > 2 ? 'completed' : 'active'}`}>
+            <h3 className="step-section-title">Step 2: Approve Permit2</h3>
+            {currentStep === 2 ? (
+              <ApprovePermit2Step
+                tokenAddresses={tokenAddresses}
+                onApproved={handlePermit2Approved}
+              />
+            ) : (
+              <div className="step-completed-summary">
+                <p>✓ Tokens approved for Permit2</p>
+              </div>
+            )}
+          </div>
         )}
-        {currentStep === 3 && willData && (
-          <EncryptStep willData={willData} onEncrypted={handleEncrypted} />
+        {currentStep >= 3 && willData && (
+          <div className={`step-section ${currentStep > 3 ? 'completed' : 'active'}`}>
+            <h3 className="step-section-title">Step 3: Sign & Encrypt</h3>
+            {currentStep === 3 ? (
+              <EncryptStep willData={willData} onEncrypted={handleEncrypted} />
+            ) : (
+              <div className="step-completed-summary">
+                <p>✓ Will signed and encrypted</p>
+              </div>
+            )}
+          </div>
         )}
-        {currentStep === 4 && encryptedData && (
-          <UploadIPFSStep encryptedData={encryptedData} onUploaded={handleUploaded} />
+        {currentStep >= 4 && encryptedData && (
+          <div className={`step-section ${currentStep > 4 ? 'completed' : 'active'}`}>
+            <h3 className="step-section-title">Step 4: Upload to IPFS</h3>
+            {currentStep === 4 ? (
+              <UploadIPFSStep encryptedData={encryptedData} onUploaded={handleUploaded} />
+            ) : (
+              <div className="step-completed-summary">
+                <p>✓ Uploaded to IPFS (CID: {cid?.slice(0, 20)}...)</p>
+              </div>
+            )}
+          </div>
         )}
-        {currentStep === 5 && cid && encryptedData && (
-          <SubmitCIDStep cid={cid} encryptedData={encryptedData} onSubmitted={handleSubmitted} />
+        {currentStep >= 5 && cid && encryptedData && (
+          <div className={`step-section ${currentStep > 5 ? 'completed' : 'active'}`}>
+            <h3 className="step-section-title">Step 5: Submit CID</h3>
+            <SubmitCIDStep cid={cid} encryptedData={encryptedData} onSubmitted={handleSubmitted} />
+          </div>
         )}
       </div>
 

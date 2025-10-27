@@ -125,7 +125,7 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
       const signedWill: SignedWill = {
         testator: willData.testator,
         executor: willData.executor,
-        estates: willData.beneficiaries.map((b) => ({
+        estates: willData.estates.map((b) => ({
           beneficiary: b.address,
           token: b.token,
           amount: b.amount,
@@ -243,7 +243,7 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
           </div>
           <div className="preview-row">
             <span className="label">Estates:</span>
-            <span>{willData.beneficiaries.length}</span>
+            <span>{willData.estates.length}</span>
           </div>
         </div>
 

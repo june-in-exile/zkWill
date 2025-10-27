@@ -25,17 +25,17 @@ export const predictWillAddress = async (
     provider
   );
 
-  // Convert beneficiaries to estates format
-  const estates = willData.beneficiaries.map((b) => ({
-    beneficiary: b.address,
-    token: b.token,
-    amount: b.amount,
+  // Format estates for contract call
+  const estatesForContract = willData.estates.map((e) => ({
+    beneficiary: e.address,
+    token: e.token,
+    amount: BigInt(e.amount),
   }));
 
   const willAddress = await willFactory.predictWill(
     willData.testator,
     willData.executor,
-    estates,
+    estatesForContract,
     salt
   );
 

@@ -181,16 +181,16 @@ input:focus, textarea:focus {
   gap: 1.5rem;
 }
 
-.beneficiaries-section {
+.estates-section {
   margin-top: 1rem;
 }
 
-.beneficiaries-section h3 {
+.estates-section h3 {
   margin-bottom: 1rem;
   color: var(--primary-color);
 }
 
-.beneficiary-item {
+.estate-item {
   background-color: #0d0d0d;
   padding: 1rem;
   border-radius: 8px;

@@ -11,7 +11,7 @@ import { FIELD_HEX_LENGTH } from "@shared/constants/index.js";
  * @param signedWill - The signed will data object
  * @returns Serialized will with hex string
  */
-export function serializeWill(signedWill: SignedWill): SerializedWill {
+function serializeWill(signedWill: SignedWill): SerializedWill {
   let hex = "";
 
   // Add testator address (remove 0x prefix)
@@ -53,11 +53,4 @@ export function serializeWill(signedWill: SignedWill): SerializedWill {
   };
 }
 
-/**
- * Serializes will to hex string only (for backward compatibility)
- * @param signedWill - The signed will data object
- * @returns Hex string
- */
-export function serializeWillToHex(signedWill: SignedWill): string {
-  return serializeWill(signedWill).hex;
-}
+export { serializeWill }

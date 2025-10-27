@@ -54,9 +54,9 @@ export const createPermitStructure = (
   nonce: bigint,
   deadline: number
 ): Permit2Data => {
-  const permitted: PermittedToken[] = willData.beneficiaries.map((beneficiary) => ({
-    token: beneficiary.token,
-    amount: BigInt(beneficiary.amount), // Ensure amount is bigint
+  const permitted: PermittedToken[] = willData.estates.map((estate) => ({
+    token: estate.token,
+    amount: BigInt(estate.amount),
   }));
 
   return {

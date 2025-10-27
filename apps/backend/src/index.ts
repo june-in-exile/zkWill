@@ -8,7 +8,7 @@ import {
   generateSalt,
   encrypt,
   decrypt,
-  serializeWillToHex
+  serializeWill
 } from '@shared/utils/index.js';
 import { CRYPTO_CONFIG } from '@config';
 import type { Groth16Proof, SignedWill } from '@shared/types/index.js';
@@ -104,13 +104,26 @@ app.post('/api/crypto/encrypt', async (req: Request, res: Response) => {
 
     console.log(`\n🔐 Encrypting will data...`);
 
-    // Serialize will to hex
-    let hexString = serializeWillToHex(signedWill);
-    if (hexString.length % 2 === 1) {
-      hexString += '0';
-    }
+    // Convert string types to bigint for serialization
+    const signedWillWithBigInt: SignedWill = {
+      ...signedWill,
+      estates: signedWill.estates.map((estate) => ({
+        ...estate,
+        amount: typeof estate.amount === 'string' ? BigInt(estate.amount) : estate.amount,
+      })),
+      salt: typeof signedWill.salt === 'string' ? BigInt(signedWill.salt) : signedWill.salt,
+      permit2: {
+        ...signedWill.permit2,
+        nonce: typeof signedWill.permit2.nonce === 'string'
+          ? BigInt(signedWill.permit2.nonce)
+          : signedWill.permit2.nonce,
+      },
+    };
 
-    const plaintext = Buffer.from(hexString, 'hex');
+    // Serialize will to hex
+    let serializedWill = serializeWill(signedWillWithBigInt);
+
+    const plaintext = Buffer.from(serializedWill.hex, 'hex');
     const key = generateKey();
     const iv = generateInitializationVector();
 
