@@ -7,9 +7,9 @@ import type { EncryptedData } from '../TestatorPage';
 // Format ZKP proof from backend for contract submission
 function formatProofForContract(proof: any) {
   return {
-    a: proof.proof.pi_a.slice(0, 2),
-    b: proof.proof.pi_b.slice(0, 2).map((arr: string[]) => arr.slice(0, 2)),
-    c: proof.proof.pi_c.slice(0, 2),
+    pi_a: proof.proof.pi_a.slice(0, 2),
+    pi_b: proof.proof.pi_b.slice(0, 2).map((arr: string[]) => arr.slice(0, 2)),
+    pi_c: proof.proof.pi_c.slice(0, 2),
     publicSignals: proof.publicSignals,
   };
 }

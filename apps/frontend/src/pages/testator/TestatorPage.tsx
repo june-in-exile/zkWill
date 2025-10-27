@@ -120,7 +120,7 @@ const TestatorPage: React.FC = () => {
               <CreateWillForm testatorAddress={address!} onSubmit={handleWillCreated} />
             ) : (
               <div className="step-completed-summary">
-                <p>✓ Will created with {willData?.estates.length} beneficiary(ies)</p>
+                <p>✓ Will created with {willData?.estates.length} estate(s)</p>
               </div>
             )}
           </div>

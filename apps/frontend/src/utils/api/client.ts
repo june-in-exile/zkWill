@@ -152,3 +152,33 @@ export async function generateSalt(): Promise<string> {
   const data = await response.json();
   return data.salt;
 }
+
+/**
+ * Predict Will contract address using CREATE2
+ */
+export async function predictWillAddress(
+  testator: string,
+  executor: string,
+  estates: Array<{
+    beneficiary: string;
+    token: string;
+    amount: string;
+  }>,
+  salt: string
+): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/api/utils/predict-will`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ testator, executor, estates, salt }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Predict will address failed');
+  }
+
+  const data = await response.json();
+  return data.willAddress;
+}

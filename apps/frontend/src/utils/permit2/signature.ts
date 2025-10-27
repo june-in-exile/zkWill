@@ -156,6 +156,12 @@ export const signPermit2 = async (
       message: messageWithStrings,
     };
 
+    console.log('🔐 Frontend signing with:');
+    console.log('domain:', domainWithStrings);
+    console.log('primaryType:', primaryType);
+    console.log('types:', typesWithoutDomain);
+    console.log('message:', messageWithStrings);
+
     let signature: string;
     try {
       const signaturePromise = window.ethereum.request({
@@ -211,5 +217,7 @@ export const generateWillPermit2Signature = async (
   const permit = createPermitStructure(willData, willContractAddress, nonce, deadline);
 
   // Sign permit (pass chainId to avoid network call)
+  console.log("signer:", signer);
+  console.log("chainId:", chainId);
   return await signPermit2(permit, signer, chainId);
 };

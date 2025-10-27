@@ -9,9 +9,8 @@
 
 import React, { useState } from 'react';
 import { useWallet } from '@hooks/useWallet';
-import { predictWillAddress } from '@utils/contract/predictWill';
 import { generateWillPermit2Signature } from '@utils/permit2/signature';
-import { encryptWill as encryptWillAPI, generateSalt as generateSaltAPI } from '@utils/api/client';
+import { encryptWill as encryptWillAPI, generateSalt as generateSaltAPI, predictWillAddress as predictWillAddressAPI } from '@utils/api/client';
 import type { WillData, EncryptedData } from '../TestatorPage';
 import './EncryptStep.css';
 
@@ -38,7 +37,7 @@ interface Props {
 }
 
 const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
-  const { signer, provider, chainId, isConnected, isCorrectNetwork, address, expectedChainId } = useWallet();
+  const { signer, chainId, isConnected, isCorrectNetwork, address, expectedChainId } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string>('');
@@ -82,7 +81,7 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
       return;
     }
 
-    if (!signer || !provider) {
+    if (!signer) {
       setError('Wallet not properly initialized');
       return;
     }
@@ -107,12 +106,30 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
       const saltString = await generateSaltAPI();
       const salt = BigInt(saltString);
 
-      // Step 2: Predict Will contract address
+      // Step 2: Predict Will contract address via backend API
       setProgress('Predicting Will contract address...');
-      const willAddress = await predictWillAddress(salt, willData, provider);
+      const willAddress = await predictWillAddressAPI(
+        willData.testator,
+        willData.executor,
+        willData.estates.map((e) => ({
+          beneficiary: e.address,
+          token: e.token,
+          amount: e.amount,
+        })),
+        saltString
+      );
 
       // Step 3: Generate Permit2 signature (requires user wallet signature)
       setProgress('Generating Permit2 signature (please sign in wallet)...');
+
+      // Verify signer address matches testator
+      const signerAddress = await signer.getAddress();
+      if (signerAddress.toLowerCase() !== willData.testator.toLowerCase()) {
+        throw new Error(
+          `Wallet address mismatch! Current wallet: ${signerAddress}, but testator is: ${willData.testator}. Please switch to the correct account.`
+        );
+      }
+
       const permit2Data = await generateWillPermit2Signature(
         willData,
         willAddress,
