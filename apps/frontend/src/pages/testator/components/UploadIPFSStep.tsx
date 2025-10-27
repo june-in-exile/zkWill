@@ -19,6 +19,7 @@ const UploadIPFSStep: React.FC<Props> = ({ encryptedData, onUploaded }) => {
       const cid = await uploadToIPFS(encryptedData.encrypted);
       onUploaded(cid);
     } catch (err) {
+      console.error('IPFS upload failed:', err);
       setError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);

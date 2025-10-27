@@ -128,6 +128,7 @@ export const useWallet = () => {
       chainId: null,
       isConnecting: false,
       error: null,
+      isCorrectNetwork: false,
     });
   }, []);
 

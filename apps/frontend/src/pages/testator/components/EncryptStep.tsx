@@ -38,15 +38,63 @@ interface Props {
 }
 
 const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
-  const { signer, provider, chainId } = useWallet();
+  const { signer, provider, chainId, isConnected, isCorrectNetwork, address, expectedChainId } = useWallet();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string>('');
   const [signedWillData, setSignedWillData] = useState<SignedWill | null>(null);
 
+  // Add network to MetaMask
+  const addNetworkToMetaMask = async () => {
+    if (!window.ethereum) {
+      setError('MetaMask not installed');
+      return;
+    }
+
+    try {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [
+          {
+            chainId: '0x66eee', // 421614 in hex
+            chainName: 'Arbitrum Sepolia',
+            nativeCurrency: {
+              name: 'ETH',
+              symbol: 'ETH',
+              decimals: 18,
+            },
+            rpcUrls: ['https://sepolia-rollup.arbitrum.io/rpc'],
+            blockExplorerUrls: ['https://sepolia.arbiscan.io'],
+          },
+        ],
+      });
+      console.log('✅ Network added to MetaMask successfully!');
+    } catch (err: any) {
+      console.error('Failed to add network:', err);
+      setError(`Failed to add network: ${err.message}`);
+    }
+  };
+
   const handleEncryptProcess = async () => {
+    // Validate wallet connection
+    if (!isConnected || !address) {
+      setError('Please connect MetaMask wallet first');
+      return;
+    }
+
     if (!signer || !provider) {
-      setError('Wallet not connected');
+      setError('Wallet not properly initialized');
+      return;
+    }
+
+    // Validate network
+    if (!isCorrectNetwork) {
+      setError(`Wrong network! Please switch to Chain ID ${expectedChainId}`);
+      return;
+    }
+
+    if (!chainId) {
+      setError('Cannot get chain ID');
       return;
     }
 
@@ -58,12 +106,10 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
       setProgress('Generating salt for Will contract...');
       const saltString = await generateSaltAPI();
       const salt = BigInt(saltString);
-      console.log('Generated salt:', salt.toString());
 
       // Step 2: Predict Will contract address
       setProgress('Predicting Will contract address...');
       const willAddress = await predictWillAddress(salt, willData, provider);
-      console.log('Predicted Will address:', willAddress);
 
       // Step 3: Generate Permit2 signature (requires user wallet signature)
       setProgress('Generating Permit2 signature (please sign in wallet)...');
@@ -73,10 +119,6 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
         signer,
         chainId ?? undefined
       );
-      console.log('Permit2 signature generated');
-      console.log('  Nonce:', permit2Data.nonce.toString());
-      console.log('  Deadline:', new Date(permit2Data.deadline * 1000).toISOString());
-      console.log('  Signature:', permit2Data.signature.slice(0, 20) + '...');
 
       // Step 4: Build complete SignedWill object
       setProgress('Building signed will structure...');
@@ -102,14 +144,13 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
       // Step 5 & 6: Serialize and encrypt via backend API (combined)
       setProgress('Serializing and encrypting will via backend...');
       const encryptedResult = await encryptWillAPI(signedWill);
-      console.log('Will encrypted successfully');
 
       // Step 7: Download encryption key for user
       setProgress('Downloading encryption key...');
-      const keyHex = encryptedResult.key
+      const keyHexForDownload = encryptedResult.key
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
-      const keyBlob = new Blob([keyHex], { type: 'text/plain' });
+      const keyBlob = new Blob([keyHexForDownload], { type: 'text/plain' });
       const url = URL.createObjectURL(keyBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -139,6 +180,41 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
   return (
     <div className="encrypt-step">
       <h2>Sign & Encrypt Will</h2>
+
+      {/* Wallet Connection Status */}
+      {!isConnected && (
+        <div className="error" style={{ marginBottom: '1rem' }}>
+          ⚠️ Please connect your MetaMask wallet first
+          <br />
+          <small style={{ marginTop: '0.5rem', display: 'block' }}>
+            Make sure MetaMask is installed and you've connected your wallet to this site.
+          </small>
+        </div>
+      )}
+
+      {isConnected && !isCorrectNetwork && (
+        <div className="error" style={{ marginBottom: '1rem' }}>
+          ⚠️ Wrong network detected! Expected Chain ID: {expectedChainId}, but connected to: {chainId}
+          <br />
+          Please switch your wallet to Arbitrum Sepolia.
+          <br />
+          <button
+            onClick={addNetworkToMetaMask}
+            className="btn-secondary"
+            style={{ marginTop: '0.5rem' }}
+          >
+            ➕ Add Arbitrum Sepolia to MetaMask
+          </button>
+        </div>
+      )}
+
+      {isConnected && isCorrectNetwork && (
+        <div className="info-box" style={{ marginBottom: '1rem', background: '#d4edda', borderColor: '#c3e6cb', color: '#155724' }}>
+          ✅ Wallet Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+          <br />
+          ✅ Network: Chain ID {chainId}
+        </div>
+      )}
 
       <div className="info-box">
         <h3>This step will:</h3>

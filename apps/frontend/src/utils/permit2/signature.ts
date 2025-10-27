@@ -68,6 +68,24 @@ export const createPermitStructure = (
 };
 
 /**
+ * Helper function to convert all BigInt values to strings recursively
+ */
+const convertBigIntToString = (obj: any): any => {
+  if (typeof obj === 'bigint') {
+    return obj.toString();
+  } else if (Array.isArray(obj)) {
+    return obj.map(convertBigIntToString);
+  } else if (obj !== null && typeof obj === 'object') {
+    const converted: any = {};
+    for (const key in obj) {
+      converted[key] = convertBigIntToString(obj[key]);
+    }
+    return converted;
+  }
+  return obj;
+};
+
+/**
  * Sign permit using EIP-712
  * Returns signature that can be used with Permit2 SignatureTransfer
  */
@@ -90,15 +108,6 @@ export const signPermit2 = async (
     // Use Permit2 address from config, fallback to SDK default
     const permit2Address = CONTRACT_ADDRESSES.PERMIT2 || PERMIT2_ADDRESS;
 
-    console.log('Generating Permit2 signature...');
-    console.log('Chain ID:', resolvedChainId);
-    console.log('Permit2 Address:', permit2Address);
-    console.log('Spender (Will):', permit.spender);
-    console.log('Tokens:', permit.permitted.length);
-    console.log('Nonce:', permit.nonce.toString());
-    console.log('Deadline:', permit.deadline);
-    console.log('Deadline (date):', new Date(permit.deadline * 1000).toISOString());
-
     // Get EIP-712 typed data from Permit2 SDK
     // Pass chainId as number (SDK accepts both number and bigint)
     const { domain, types, values } = SignatureTransfer.getPermitData(
@@ -106,10 +115,6 @@ export const signPermit2 = async (
       permit2Address,
       resolvedChainId
     );
-
-    console.log('EIP-712 data generated');
-    console.log('Domain:', domain);
-    console.log('Values:', values);
 
     // Use window.ethereum directly for better compatibility with MetaMask
     // This approach avoids ethers v5/v6 signer differences
@@ -119,34 +124,49 @@ export const signPermit2 = async (
       throw new Error('MetaMask not available');
     }
 
-    console.log('Requesting signature from wallet (eth_signTypedData_v4)...');
-
     // Construct EIP-712 message for eth_signTypedData_v4
     // This is the standard MetaMask format
-    const typedData = {
-      types,
-      domain,
-      primaryType: 'PermitBatch', // Permit2 SDK uses PermitBatch for multiple tokens
-      message: values,
-    };
+    // IMPORTANT: Remove EIP712Domain from types as MetaMask adds it automatically
+    const { EIP712Domain, ...typesWithoutDomain } = types as any;
 
-    console.log('TypedData for signing:', JSON.stringify(typedData, (_key, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    , 2));
+    // Determine primary type based on available types
+    // Permit2 SDK uses different types for single vs batch permits
+    const availableTypes = Object.keys(typesWithoutDomain);
+    let primaryType: string;
+
+    if (availableTypes.includes('PermitBatch')) {
+      primaryType = 'PermitBatch';
+    } else if (availableTypes.includes('PermitSingle')) {
+      primaryType = 'PermitSingle';
+    } else if (availableTypes.includes('PermitTransferFrom')) {
+      primaryType = 'PermitTransferFrom';
+    } else {
+      // Fallback: use the first available type that's not a nested type
+      primaryType = availableTypes.find(t => !['TokenPermissions'].includes(t)) || availableTypes[0];
+    }
+
+    // Convert all BigInt values to strings for MetaMask compatibility
+    const messageWithStrings = convertBigIntToString(values);
+    const domainWithStrings = convertBigIntToString(domain);
+
+    const typedData = {
+      types: typesWithoutDomain,
+      domain: domainWithStrings,
+      primaryType,
+      message: messageWithStrings,
+    };
 
     let signature: string;
     try {
-      signature = (await window.ethereum.request({
+      const signaturePromise = window.ethereum.request({
         method: 'eth_signTypedData_v4',
         params: [
           signerAddress,
-          JSON.stringify(typedData, (_key, value) =>
-            typeof value === 'bigint' ? value.toString() : value
-          ),
+          JSON.stringify(typedData),
         ],
-      })) as string;
+      });
 
-      console.log('Signature generated successfully!');
+      signature = (await signaturePromise) as string;
     } catch (signError: any) {
       console.error('Signature error:', signError);
 
