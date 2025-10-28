@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -25,7 +26,19 @@ try {
 }
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    nodePolyfills({
+      // Enable specific polyfills
+      include: ['path', 'buffer', 'process', 'util', 'url', 'stream'],
+      // Inject global variables
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -39,6 +52,8 @@ export default defineConfig({
     },
   },
   define: {
+    // Global polyfills
+    global: 'globalThis',
     // Inject contract addresses from root .env
     'import.meta.env.VITE_PERMIT2': JSON.stringify(rootEnv.PERMIT2 || ''),
     'import.meta.env.VITE_WILL_FACTORY': JSON.stringify(rootEnv.WILL_FACTORY || ''),

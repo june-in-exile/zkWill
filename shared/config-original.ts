@@ -5,21 +5,39 @@ import {
   CHACHA20_POLY1305,
 } from "@shared/constants/cryptography.js";
 import type { SupportedAlgorithm } from "@shared/types/crypto.js";
-import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
-import { config } from "dotenv";
 import type { Encoding } from "crypto";
 
-// Browser detection
+// Detect if running in Node.js or browser environment
 const isBrowser = typeof window !== 'undefined';
 
-// Initialize path variables
-// In browser, these will use dummy values but won't cause errors
-const modulePath = isBrowser ? '/shared' : dirname(fileURLToPath(import.meta.url));
+// In browser, provide dummy implementations
+let resolve: any = (...args: string[]) => args.join('/');
+let dirname: any = (path: string) => path;
+let modulePath: string = '/shared';
 
-// Load environment variables (only in Node.js)
+// In Node.js, use actual path resolution
+// This check happens at import time
 if (!isBrowser) {
-  config({ path: resolve(modulePath, "../.env") });
+  // NOTE: This code only runs in Node.js, so these imports are safe
+  // We can't use top-level await here, so we use a workaround
+  const pathModule = require('path');
+  const { fileURLToPath: fileURLToPathFn } = require('url');
+
+  try {
+    resolve = pathModule.resolve;
+    dirname = pathModule.dirname;
+    modulePath = dirname(fileURLToPathFn(import.meta.url));
+
+    // Load .env in Node.js
+    const dotenv = require('dotenv');
+    dotenv.config({ path: resolve(modulePath, "../.env") });
+  } catch (error) {
+    console.warn('Failed to load Node.js modules:', error);
+    // Fallback to dummy implementations
+    resolve = (...args: string[]) => args.join('/');
+    dirname = (path: string) => path;
+    modulePath = '/shared';
+  }
 }
 
 /**

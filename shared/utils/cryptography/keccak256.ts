@@ -238,15 +238,18 @@ async function main(): Promise<void> {
 }
 
 // Check: is this file being executed directly or imported?
-if (import.meta.url === new URL(process.argv[1], "file:").href) {
-  // Only run when executed directly
-  main().catch((error) => {
-    console.error(
-      chalk.red.bold("Uncaught error:"),
-      error instanceof Error ? error.message : "Unknown error",
-    );
-    process.exit(1);
-  });
+// Only run in Node.js environment
+if (typeof process !== 'undefined' && process.argv && process.argv[1]) {
+  if (import.meta.url === new URL(process.argv[1], "file:").href) {
+    // Only run when executed directly
+    main().catch((error) => {
+      console.error(
+        chalk.red.bold("Uncaught error:"),
+        error instanceof Error ? error.message : "Unknown error",
+      );
+      process.exit(1);
+    });
+  }
 }
 
 export { keccak256 };
