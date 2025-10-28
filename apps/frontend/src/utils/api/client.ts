@@ -46,9 +46,6 @@ interface ZkpProof {
  * Encrypt will data using backend
  */
 export async function encryptWill(signedWill: SignedWill): Promise<EncryptedWill> {
-  console.log('📤 DEBUG - Sending to backend /api/crypto/encrypt');
-  console.log('📤 DEBUG - Request body:', JSON.stringify({ signedWill }, null, 2));
-
   const response = await fetch(`${API_BASE_URL}/api/crypto/encrypt`, {
     method: 'POST',
     headers: {
@@ -59,12 +56,10 @@ export async function encryptWill(signedWill: SignedWill): Promise<EncryptedWill
 
   if (!response.ok) {
     const error = await response.json();
-    console.error('❌ DEBUG - Backend encryption failed:', error);
     throw new Error(error.message || 'Encryption failed');
   }
 
   const result = await response.json();
-  console.log('📥 DEBUG - Backend response received');
 
   return result;
 }
@@ -78,14 +73,6 @@ export async function decryptWill(
   iv: number[],
   algorithm?: string
 ): Promise<{ plaintext: number[]; hex: string }> {
-  console.log('🔓 DEBUG - Sending to backend /api/crypto/decrypt');
-  console.log('🔓 DEBUG - Request params:', {
-    ciphertextLength: ciphertext.length,
-    keyLength: key.length,
-    ivLength: iv.length,
-    algorithm: algorithm || 'default'
-  });
-
   const response = await fetch(`${API_BASE_URL}/api/crypto/decrypt`, {
     method: 'POST',
     headers: {
@@ -96,13 +83,10 @@ export async function decryptWill(
 
   if (!response.ok) {
     const error = await response.json();
-    console.error('❌ DEBUG - Backend decryption failed:', error);
     throw new Error(error.message || 'Decryption failed');
   }
 
   const result = await response.json();
-  console.log('📥 DEBUG - Decryption response received');
-  console.log('📥 DEBUG - Plaintext length:', result.plaintext?.length, 'bytes');
 
   return result;
 }

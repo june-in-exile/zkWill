@@ -259,8 +259,6 @@ app.post('/api/utils/predict-will', async (req: Request, res: Response) => {
       amount: typeof estate.amount === 'string' ? BigInt(estate.amount) : estate.amount,
     }));
 
-    console.log('🔍 DEBUG - Estates with BigInt:', JSON.stringify(estatesWithBigInt, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2));
-
     const predictedAddress = await executePredictWill(contract, {
       testator,
       executor,

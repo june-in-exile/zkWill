@@ -6,8 +6,8 @@ import { generateZkpProof } from "@shared/utils/cryptography/zkp.js";
 import { WILL_TYPE } from "@shared/constants/index.js";
 import {
   readWill,
-  getKey,
 } from "@shared/utils/index.js";
+import { getKey } from "@shared/utils/cryptography/key.js";
 import chalk from "chalk";
 
 async function proveForWillCreation(): Promise<Groth16Proof> {

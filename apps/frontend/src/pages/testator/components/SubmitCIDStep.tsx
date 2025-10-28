@@ -35,7 +35,7 @@ function encryptedDataToTypedJsonObject(encryptedData: EncryptedData) {
   keys.push("iv");
   values.push({
     value: "",
-    numberArray: encryptedData.encrypted.iv.map(n => n.toString()),
+    numberArray: encryptedData.encrypted.iv.map((n: number) => n.toString()),
     valueType: 2,
   });
 
@@ -43,7 +43,7 @@ function encryptedDataToTypedJsonObject(encryptedData: EncryptedData) {
   keys.push("authTag");
   values.push({
     value: "",
-    numberArray: encryptedData.encrypted.authTag.map(n => n.toString()),
+    numberArray: encryptedData.encrypted.authTag.map((n: number) => n.toString()),
     valueType: 2,
   });
 
@@ -51,7 +51,7 @@ function encryptedDataToTypedJsonObject(encryptedData: EncryptedData) {
   keys.push("ciphertext");
   values.push({
     value: "",
-    numberArray: encryptedData.encrypted.ciphertext.map(n => n.toString()),
+    numberArray: encryptedData.encrypted.ciphertext.map((n: number) => n.toString()),
     valueType: 2,
   });
 
@@ -142,7 +142,7 @@ const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, onSubmitted }) => 
         <>
           <p>Generate a zero-knowledge proof to verify your encrypted will.</p>
           <div className="info-box">
-            <p>⚠️ This may take 5-15 minutes depending on your device.</p>
+            <p>⚠️ This may take minutes depending on your device.</p>
             <p>The page may become unresponsive during proof generation.</p>
           </div>
 
