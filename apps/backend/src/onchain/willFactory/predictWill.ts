@@ -22,7 +22,7 @@ import {
   saveWill,
 } from "@shared/utils/file/index.js";
 import { validateEthereumAddress } from "@shared/utils/validation/index.js";
-// import { generateSalt } from "@shared/utils/cryptography/index.js";
+import { generateSalt } from "@shared/utils/cryptography/index.js";
 import { createContract } from "@shared/utils/blockchain.js";
 import { printEstates } from "@shared/utils/print.js";
 import { JsonRpcProvider } from "ethers";
@@ -130,8 +130,7 @@ async function processPredictWill(): Promise<ProcessResult> {
 
     const willData: FormattedWill = readWill(WILL_TYPE.FORMATTED);
 
-    // const salt = generateSalt();
-    const salt = 50488959960934814917696171139809710418977764484544753035433637781874432512215n;
+    const salt = generateSalt();
 
     const predictedAddress = await executePredictWill(contract, {
       testator: willData.testator,

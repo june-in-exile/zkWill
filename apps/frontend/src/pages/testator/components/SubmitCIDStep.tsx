@@ -14,6 +14,58 @@ function formatProofForContract(proof: any) {
   };
 }
 
+// Convert EncryptedData to TypedJsonObject format for contract
+function encryptedDataToTypedJsonObject(encryptedData: EncryptedData) {
+  const keys: string[] = [];
+  const values: Array<{
+    value: string;
+    numberArray: string[];
+    valueType: number;
+  }> = [];
+
+  // algorithm (STRING = 0)
+  keys.push("algorithm");
+  values.push({
+    value: encryptedData.encrypted.algorithm,
+    numberArray: [],
+    valueType: 0,
+  });
+
+  // iv (NUMBER_ARRAY = 2)
+  keys.push("iv");
+  values.push({
+    value: "",
+    numberArray: encryptedData.encrypted.iv.map(n => n.toString()),
+    valueType: 2,
+  });
+
+  // authTag (NUMBER_ARRAY = 2)
+  keys.push("authTag");
+  values.push({
+    value: "",
+    numberArray: encryptedData.encrypted.authTag.map(n => n.toString()),
+    valueType: 2,
+  });
+
+  // ciphertext (NUMBER_ARRAY = 2)
+  keys.push("ciphertext");
+  values.push({
+    value: "",
+    numberArray: encryptedData.encrypted.ciphertext.map(n => n.toString()),
+    valueType: 2,
+  });
+
+  // timestamp (NUMBER = 1)
+  keys.push("timestamp");
+  values.push({
+    value: encryptedData.encrypted.timestamp.toString(),
+    numberArray: [],
+    valueType: 1,
+  });
+
+  return { keys, values };
+}
+
 interface Props {
   cid: string;
   encryptedData: EncryptedData;
@@ -63,8 +115,9 @@ const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, onSubmitted }) => 
       console.log('Submitting CID to WillFactory:', cid);
 
       const formattedProof = formatProofForContract(proof);
+      const willObject = encryptedDataToTypedJsonObject(encryptedData);
 
-      const receipt = await uploadCid(signer, cid, formattedProof);
+      const receipt = await uploadCid(signer, cid, formattedProof, willObject);
 
       console.log('CID uploaded successfully:', receipt.hash);
       onSubmitted();

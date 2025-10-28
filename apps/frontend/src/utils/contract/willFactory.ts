@@ -26,16 +26,25 @@ export const uploadCid = async (
     pi_b: string[][];
     pi_c: string[];
     publicSignals: string[];
+  },
+  will: {
+    keys: string[];
+    values: Array<{
+      value: string;
+      numberArray: string[];
+      valueType: number;
+    }>;
   }
 ) => {
   const contract = getWillFactoryContract(signer);
 
   const tx = await contract.uploadCid(
-    cid,
     proof.pi_a,
     proof.pi_b,
     proof.pi_c,
-    proof.publicSignals
+    proof.publicSignals,
+    will,
+    cid
   );
 
   const receipt = await tx.wait();

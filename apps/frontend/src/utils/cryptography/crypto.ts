@@ -1,8 +1,3 @@
-/**
- * Cryptography utilities for frontend
- * Uses Web Crypto API for encryption/decryption
- */
-
 export interface EncryptionResult {
   ciphertext: number[];
   iv: number[];
@@ -52,7 +47,7 @@ export const exportKey = async (key: CryptoKey): Promise<Uint8Array> => {
 export const importKey = async (keyData: Uint8Array): Promise<CryptoKey> => {
   return await crypto.subtle.importKey(
     'raw',
-    keyData,
+    keyData as BufferSource,
     {
       name: 'AES-CTR',
       length: 256,
@@ -73,11 +68,11 @@ export const encrypt = async (
   const ciphertext = await crypto.subtle.encrypt(
     {
       name: 'AES-CTR',
-      counter: iv,
+      counter: iv as BufferSource,
       length: 128,
     },
     key,
-    plaintext
+    plaintext as BufferSource
   );
 
   return {
@@ -97,11 +92,11 @@ export const decrypt = async (
   const decrypted = await crypto.subtle.decrypt(
     {
       name: 'AES-CTR',
-      counter: iv,
+      counter: iv as BufferSource,
       length: 128,
     },
     key,
-    ciphertext
+    ciphertext as BufferSource
   );
 
   return new Uint8Array(decrypted);

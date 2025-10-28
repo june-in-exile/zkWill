@@ -16,10 +16,7 @@ import {
   readWill,
   saveWill,
 } from "@shared/utils/file/index.js";
-import {
-  // generateNonce, calculateDeadline,
-  signPermit2,
-} from "@shared/utils/cryptography/index.js";
+import { generateNonce, calculateDeadline, signPermit2 } from "@shared/utils/cryptography/index.js";
 import { createSigner, createPermitStructure } from "@shared/utils/blockchain.js";
 import preview from "@shared/utils/transform/preview.js";
 import { JsonRpcProvider } from "ethers";
@@ -87,10 +84,8 @@ async function processPermitSigning(): Promise<ProcessResult> {
     const willData: AddressedWill = readWill(WILL_TYPE.ADDRESSED);
 
     console.log(chalk.blue("Generating signature parameters..."));
-    // const nonce = generateNonce();
-    // const deadline = calculateDeadline();
-    const nonce = 94291489168460372312063129039338610341n;
-    const deadline = 4915260772;
+    const nonce = generateNonce();
+    const deadline = calculateDeadline();
 
     const permit = createPermitStructure(
       willData.estates,

@@ -107,8 +107,7 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
     try {
       // Step 1: Generate salt via backend API
       setProgress('Generating salt for Will contract...');
-      // const saltString = await generateSaltAPI();
-      const saltString = "50488959960934814917696171139809710418977764484544753035433637781874432512215";
+      const saltString = await generateSaltAPI();
       const salt = BigInt(saltString);
 
       // Step 2: Predict Will contract address via backend API

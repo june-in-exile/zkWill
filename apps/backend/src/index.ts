@@ -145,10 +145,8 @@ app.post('/api/crypto/encrypt', async (req: Request, res: Response) => {
     let serializedWill = serializeWill(signedWillWithBigInt);
 
     const plaintext = Buffer.from(serializedWill.hex, 'hex');
-    // const key = generateKey();
-    const key = Buffer.from("z6Nn/viwn4mwUW8KC2DCJycs8JyD2T7xkQKOFjMmidM=", 'base64');
-    // const iv = generateInitializationVector();
-    const iv = Buffer.from("DGon+2oDuOg5yCIjK5Cqyw==", 'base64');
+    const key = generateKey();
+    const iv = generateInitializationVector();
 
     const result = encrypt(CRYPTO_CONFIG.algorithm, plaintext, key, iv);
 

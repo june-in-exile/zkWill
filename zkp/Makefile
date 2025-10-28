@@ -1,13 +1,9 @@
 # Default circuit for circuit-specific operations
 # CIRCUIT = willCreation
-# CIRCUIT = willCreation
-# CIRCUIT = ctrDecrypt
 CIRCUIT = cidUpload
 CIRCUIT ?= multiplier2
 
 # TEMPLATE = CreateWill
-# TEMPLATE = CreateWill
-# TEMPLATE = CtrDecrypt
 TEMPLATE = UploadCid
 TEMPLATE ?= Multiplier2
 
