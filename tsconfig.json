@@ -13,7 +13,7 @@
     "types": ["vitest/globals"],
     "paths": {
       "@shared/*": ["./shared/*"],
-      "@config": ["./shared/config.js"]
+      "@config": ["./shared/config.ts"]
     }
   },
   "exclude": ["node_modules"]

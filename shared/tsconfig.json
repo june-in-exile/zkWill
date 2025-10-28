@@ -6,7 +6,7 @@
     "sourceMap": true, // generate .js.map
     "paths": {
       "@shared/*": ["./*"],
-      "@config": ["./config.js"]
+      "@config": ["./config.ts"]
     }
   },
   "exclude": ["node_modules", "dist"]

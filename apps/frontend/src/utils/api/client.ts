@@ -182,3 +182,31 @@ export async function predictWillAddress(
   const data = await response.json();
   return data.willAddress;
 }
+
+/**
+ * Sign Permit2 using backend's TESTATOR_PRIVATE_KEY
+ */
+export async function signPermit2WithBackend(
+  estates: Array<{
+    token: string;
+    amount: string;
+  }>,
+  willAddress: string,
+  nonce: string,
+  deadline: number
+): Promise<{ signature: string; signerAddress: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/permit2/sign`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ estates, willAddress, nonce, deadline }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Permit2 signing failed');
+  }
+
+  return response.json();
+}

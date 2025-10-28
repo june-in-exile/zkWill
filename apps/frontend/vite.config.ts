@@ -35,6 +35,7 @@ export default defineConfig({
       '@hooks': path.resolve(__dirname, './src/hooks'),
       '@types': path.resolve(__dirname, './src/types'),
       '@shared': path.resolve(__dirname, '../../shared'),
+      '@config': path.resolve(__dirname, '../../shared/config.ts'),
     },
   },
   define: {

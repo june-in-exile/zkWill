@@ -22,6 +22,26 @@ build/
 cache/
 out/
 
+# TypeScript compilation artifacts
+shared/**/*.js
+shared/**/*.js.map
+shared/**/*.d.ts
+shared/**/*.d.ts.map
+
+apps/**/src/**/*.js
+apps/**/src/**/*.js.map
+apps/**/src/**/*.d.ts
+apps/**/src/**/*.d.ts.map
+
+# Keep hand-written type declarations
+!apps/frontend/src/vite-env.d.ts
+!apps/frontend/src/types/global.d.ts
+
+# Config file compilation artifacts (keep source .ts, ignore compiled .js)
+apps/**/vitest.config.js
+apps/**/tsconfig.tsbuildinfo
+!apps/**/eslint.config.js
+
 # =============================================================================
 # ENVIRONMENT & SECRETS
 # =============================================================================

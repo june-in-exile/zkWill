@@ -1,5 +1,7 @@
 import { PATHS_CONFIG, PERMIT2_CONFIG, NETWORK_CONFIG } from "@config";
 import type {
+  Permit2Data,
+  PermittedToken,
   Estate,
   PermitSigning,
   AddressedWill,
@@ -17,6 +19,7 @@ import {
   saveWill,
 } from "@shared/utils/file/index.js";
 import { generateNonce } from "@shared/utils/cryptography/index.js";
+import { signPermit2 } from "@shared/utils/cryptography/signature.js";
 import { createSigner } from "@shared/utils/blockchain.js";
 import preview from "@shared/utils/transform/preview.js";
 import { JsonRpcProvider, Wallet } from "ethers";
@@ -25,21 +28,12 @@ import chalk from "chalk";
 
 const require = createRequire(import.meta.url);
 
-// Load Permit2 SDK
+// Load Permit2 SDK for getting default PERMIT2 address
 const permit2SDK = require("@uniswap/permit2-sdk");
-const { SignatureTransfer } = permit2SDK;
 
-interface PermittedToken {
-  token: string;
-  amount: bigint;
-}
-
-interface Permit {
-  permitted: PermittedToken[];
-  spender: string;
-  nonce: bigint;
-  deadline: number;
-}
+// Using Permit2Data from shared utils
+// Keep local alias for backward compatibility
+type Permit = Permit2Data;
 
 interface ProcessResult {
   nonce: bigint;
@@ -149,8 +143,9 @@ function printPermit(permit: Permit): void {
 
 /**
  * Sign permit using EIP-712
+ * Now uses the shared signPermit2 function from @shared/utils/cryptography/signature.js
  */
-async function signPermit(
+async function signPermit2Local(
   permit: Permit,
   permit2Address: string,
   chainId: bigint,
@@ -159,13 +154,8 @@ async function signPermit(
   try {
     console.log(chalk.blue("Generating EIP-712 signature..."));
 
-    const { domain, types, values } = SignatureTransfer.getPermitData(
-      permit,
-      permit2Address,
-      chainId,
-    );
-
-    const signature = await signer.signTypedData(domain, types, values);
+    // Use the shared signPermit2 function to ensure consistency
+    const signature = await signPermit2(permit, permit2Address, chainId, signer);
 
     console.log(chalk.green("✅ Signature generated successfully"));
 
@@ -204,7 +194,7 @@ async function processPermitSigning(): Promise<ProcessResult> {
 
     printPermit(permit);
 
-    const signature = await signPermit(
+    const signature = await signPermit2Local(
       permit,
       PERMIT2,
       network.chainId,
@@ -290,4 +280,5 @@ if (import.meta.url === new URL(process.argv[1], "file:").href) {
   });
 }
 
-export { signPermit, processPermitSigning };
+// Export the shared signPermit2 for external use
+export { signPermit2, processPermitSigning };

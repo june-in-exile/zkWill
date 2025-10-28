@@ -7,6 +7,7 @@ import { ethers } from 'ethers';
 import { SignatureTransfer, PERMIT2_ADDRESS } from '@uniswap/permit2-sdk';
 import { CONTRACT_ADDRESSES } from '@/config/contracts';
 import type { WillData } from '@pages/testator/TestatorPage';
+import { signTypedData as sharedSignTypedData } from '@shared/utils/cryptography/signature.js';
 
 export interface PermittedToken {
   token: string;
@@ -88,6 +89,7 @@ const convertBigIntToString = (obj: any): any => {
 /**
  * Sign permit using EIP-712
  * Returns signature that can be used with Permit2 SignatureTransfer
+ * Uses the same logic as backend (signPermit) for signature compatibility
  */
 export const signPermit2 = async (
   permit: Permit2Data,
@@ -109,82 +111,21 @@ export const signPermit2 = async (
     const permit2Address = CONTRACT_ADDRESSES.PERMIT2 || PERMIT2_ADDRESS;
 
     // Get EIP-712 typed data from Permit2 SDK
-    // Pass chainId as number (SDK accepts both number and bigint)
     const { domain, types, values } = SignatureTransfer.getPermitData(
       permit,
       permit2Address,
       resolvedChainId
     );
 
-    // Use window.ethereum directly for better compatibility with MetaMask
-    // This approach avoids ethers v5/v6 signer differences
-    const signerAddress = await signer.getAddress();
-
-    if (!window.ethereum) {
-      throw new Error('MetaMask not available');
-    }
-
-    // Construct EIP-712 message for eth_signTypedData_v4
-    // This is the standard MetaMask format
-    // IMPORTANT: Remove EIP712Domain from types as MetaMask adds it automatically
-    const { EIP712Domain, ...typesWithoutDomain } = types as any;
-
-    // Determine primary type based on available types
-    // Permit2 SDK uses different types for single vs batch permits
-    const availableTypes = Object.keys(typesWithoutDomain);
-    let primaryType: string;
-
-    if (availableTypes.includes('PermitBatch')) {
-      primaryType = 'PermitBatch';
-    } else if (availableTypes.includes('PermitSingle')) {
-      primaryType = 'PermitSingle';
-    } else if (availableTypes.includes('PermitTransferFrom')) {
-      primaryType = 'PermitTransferFrom';
-    } else {
-      // Fallback: use the first available type that's not a nested type
-      primaryType = availableTypes.find(t => !['TokenPermissions'].includes(t)) || availableTypes[0];
-    }
-
-    // Convert all BigInt values to strings for MetaMask compatibility
-    const messageWithStrings = convertBigIntToString(values);
-    const domainWithStrings = convertBigIntToString(domain);
-
-    const typedData = {
-      types: typesWithoutDomain,
-      domain: domainWithStrings,
-      primaryType,
-      message: messageWithStrings,
-    };
-
     console.log('🔐 Frontend signing with:');
-    console.log('domain:', domainWithStrings);
-    console.log('primaryType:', primaryType);
-    console.log('types:', typesWithoutDomain);
-    console.log('message:', messageWithStrings);
+    console.log('domain:', domain);
+    console.log('types:', JSON.stringify(types, null, 2));
+    console.log('values:', JSON.stringify(values, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2));
 
-    let signature: string;
-    try {
-      const signaturePromise = window.ethereum.request({
-        method: 'eth_signTypedData_v4',
-        params: [
-          signerAddress,
-          JSON.stringify(typedData),
-        ],
-      });
+    // Use the shared signTypedData function to ensure consistency with backend
+    const signature = await sharedSignTypedData(domain, types, values, signer);
 
-      signature = (await signaturePromise) as string;
-    } catch (signError: any) {
-      console.error('Signature error:', signError);
-
-      // Check if it's a user rejection
-      if (signError.code === 'ACTION_REJECTED' || signError.code === 4001) {
-        throw new Error('User rejected the signature request');
-      }
-
-      throw new Error(
-        `Signature failed: ${signError.message || 'Unknown error'}`
-      );
-    }
+    console.log('✅ Frontend signature generated:', signature);
 
     return {
       nonce: permit.nonce,
@@ -215,9 +156,7 @@ export const generateWillPermit2Signature = async (
 
   // Create permit structure
   const permit = createPermitStructure(willData, willContractAddress, nonce, deadline);
-
+  
   // Sign permit (pass chainId to avoid network call)
-  console.log("signer:", signer);
-  console.log("chainId:", chainId);
   return await signPermit2(permit, signer, chainId);
 };

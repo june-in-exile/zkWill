@@ -14,12 +14,9 @@ import { CRYPTO_CONFIG, NETWORK_CONFIG } from '@config';
 import type { Groth16Proof, SignedWill } from '@shared/types/index.js';
 import { WillFactory__factory } from '@shared/types/typechain-types/index.js';
 import { createContract } from '@shared/utils/blockchain.js';
-import { JsonRpcProvider, verifyTypedData, TypedDataEncoder } from 'ethers';
+import { JsonRpcProvider } from 'ethers';
 import { validateNetwork } from '@shared/utils/validation/index.js';
 import { executePredictWill } from './onchain/willFactory/predictWill.js';
-
-// Permit2 canonical address (same across all chains)
-const PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 3001;
@@ -128,110 +125,6 @@ app.post('/api/crypto/encrypt', async (req: Request, res: Response) => {
       },
     };
 
-    // Verify Permit2 signature before serialization
-    console.log("🔍 Verifying Permit2 signature...");
-    try {
-      // Dynamic import of permit2-sdk to avoid ESM issues
-      const { SignatureTransfer } = await import('@uniswap/permit2-sdk');
-
-      // Build permit data for verification
-      const permit2Data = {
-        permitted: signedWillWithBigInt.estates.map((estate) => ({
-          token: estate.token,
-          amount: estate.amount,
-        })),
-        spender: signedWillWithBigInt.will,
-        nonce: signedWillWithBigInt.permit2.nonce,
-        deadline: signedWillWithBigInt.permit2.deadline,
-      };
-
-      console.log("permit2Data:", JSON.stringify(permit2Data, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2));
-
-      // Get chain ID from network config
-      const provider = new JsonRpcProvider(NETWORK_CONFIG.rpc.current);
-      const network = await provider.getNetwork();
-      const chainId = Number(network.chainId);
-
-      console.log("chainId:", chainId);
-
-      // Get EIP-712 typed data
-      const permit2Address = process.env.PERMIT2 || PERMIT2_ADDRESS;
-      const { domain, types, values } = SignatureTransfer.getPermitData(
-        permit2Data,
-        permit2Address,
-        chainId
-      );
-
-      console.log("domain:", domain);
-      console.log("types:", JSON.stringify(types, null, 2));
-      console.log("values:", JSON.stringify(values, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2));
-      console.log("testator from signedWill:", signedWillWithBigInt.testator);
-      console.log("signature:", signedWillWithBigInt.permit2.signature);
-
-      // Remove EIP712Domain from types (ethers adds it automatically)
-      const { EIP712Domain, ...typesWithoutDomain } = types;
-
-      console.log("typesWithoutDomain:", JSON.stringify(typesWithoutDomain, null, 2));
-
-      // Determine primary type (same logic as frontend)
-      const availableTypes = Object.keys(typesWithoutDomain);
-      let primaryType: string;
-      if (availableTypes.includes('PermitBatchTransferFrom')) {
-        primaryType = 'PermitBatchTransferFrom';
-      } else if (availableTypes.includes('PermitSingle')) {
-        primaryType = 'PermitSingle';
-      } else if (availableTypes.includes('PermitTransferFrom')) {
-        primaryType = 'PermitTransferFrom';
-      } else {
-        primaryType = availableTypes.find(t => !['TokenPermissions'].includes(t)) || availableTypes[0];
-      }
-
-      console.log("primaryType:", primaryType);
-
-      // Build domain in the same format as frontend (only essential fields)
-      const verifyDomain = {
-        name: domain.name,
-        chainId: Number(domain.chainId),
-        verifyingContract: domain.verifyingContract,
-      };
-
-      console.log("verifyDomain:", verifyDomain);
-
-      // Create TypedDataEncoder with explicit primaryType
-      const encoder = TypedDataEncoder.from(typesWithoutDomain);
-
-      // Get the hash using domain + encoded value
-      const hash = encoder.hashStruct(primaryType, values);
-      const domainHash = TypedDataEncoder.hashDomain(verifyDomain);
-
-      // Combine domain separator and struct hash for EIP-712
-      const { keccak256, concat } = await import('ethers');
-      const digest = keccak256(concat(['0x1901', domainHash, hash]));
-
-      console.log("EIP-712 digest:", digest);
-
-      // Recover address from signature
-      const { recoverAddress } = await import('ethers');
-      const recoveredAddress = recoverAddress(digest, signedWillWithBigInt.permit2.signature);
-
-      console.log("Recovered address:", recoveredAddress);
-
-      // Check if recovered address matches testator
-      if (recoveredAddress.toLowerCase() !== signedWillWithBigInt.testator.toLowerCase()) {
-        throw new Error(
-          `Signature verification failed: recovered address ${recoveredAddress} does not match testator ${signedWillWithBigInt.testator}`
-        );
-      }
-
-      console.log("✅ Permit2 signature verified successfully");
-      console.log("   Signer:", recoveredAddress);
-    } catch (verifyError) {
-      console.error("❌ Signature verification failed:", verifyError);
-      throw new Error(
-        `Permit2 signature verification failed: ${verifyError instanceof Error ? verifyError.message : 'Unknown error'}`
-      );
-    }
-
     // Serialize will to hex
     let serializedWill = serializeWill(signedWillWithBigInt);
 
@@ -339,7 +232,7 @@ app.post('/api/utils/predict-will', async (req: Request, res: Response) => {
       provider,
     );
 
-    const estatesWithBigInt = estates.map((estate: any) => ({
+    const estatesWithBigInt = estates.map((estate: { beneficiary: string; token: string; amount: string | bigint }) => ({
       beneficiary: estate.beneficiary,
       token: estate.token,
       amount: typeof estate.amount === 'string' ? BigInt(estate.amount) : estate.amount,

@@ -28,7 +28,7 @@ clean:
 	@@echo "Initialization completed"
 
 
-testatorUploadsEncryptedWill: approve-permit2 predict-address sign-permit serialize-will encrypt-will prove-for-cid-upload upload-will upload-cid
+testatorUploadsEncryptedWill: approve-permit2 predict-address sign-permit2 serialize-will encrypt-will prove-for-cid-upload upload-will upload-cid
 
 approve-permit2:
 	@pnpm exec tsx src/onchain/permit2/approveTokenPermit2.ts
@@ -36,8 +36,8 @@ approve-permit2:
 predict-address:
 	@pnpm exec tsx src/onchain/willFactory/predictWill.ts
 
-sign-permit:
-	@pnpm exec tsx src/offchain/signature/permit.ts
+sign-permit2:
+	@pnpm exec tsx src/offchain/signature/permit2.ts
 
 serialize-will:
 	@pnpm exec tsx src/offchain/serialization/serialize.ts

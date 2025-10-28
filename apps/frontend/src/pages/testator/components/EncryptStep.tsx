@@ -10,7 +10,11 @@
 import React, { useState } from 'react';
 import { useWallet } from '@hooks/useWallet';
 import { generateWillPermit2Signature } from '@utils/permit2/signature';
-import { encryptWill as encryptWillAPI, generateSalt as generateSaltAPI, predictWillAddress as predictWillAddressAPI } from '@utils/api/client';
+import {
+  encryptWill as encryptWillAPI,
+  generateSalt as generateSaltAPI,
+  predictWillAddress as predictWillAddressAPI
+} from '@utils/api/client';
 import type { WillData, EncryptedData } from '../TestatorPage';
 import './EncryptStep.css';
 
@@ -240,6 +244,10 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
           <li>Predict the Will contract address (using CREATE2)</li>
           <li>
             Generate Permit2 signature <strong>(requires wallet confirmation)</strong>
+          </li>
+          <li>Verify the signature from your wallet</li>
+          <li>
+            Compare with backend signature <strong>(using TESTATOR_PRIVATE_KEY)</strong>
           </li>
           <li>Serialize all will data into binary format</li>
           <li>Encrypt the serialized data</li>

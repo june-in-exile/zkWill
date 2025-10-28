@@ -31,6 +31,19 @@ interface BalanceSnapshot {
   balances: TokenBalance[];
 }
 
+interface PermittedToken {
+  token: string;
+  amount: bigint;
+}
+
+interface Permit2Data {
+  permitted: PermittedToken[];
+  spender: string;
+  nonce: bigint;
+  deadline: number;
+}
+
+
 interface Permit2Signature {
   nonce: bigint;
   deadline: number;
@@ -44,5 +57,7 @@ export type {
   WillContractInfo,
   TokenBalance,
   BalanceSnapshot,
+  PermittedToken,
+  Permit2Data,
   Permit2Signature,
 };
