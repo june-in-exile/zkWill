@@ -1,6 +1,4 @@
-import {
-  type Permit2Data,
-} from "@shared/types/blockchain.js";
+import { type Permit2Data } from "@shared/types/blockchain.js";
 import {
   validateEthereumAddress,
   validateSignature,
@@ -8,31 +6,26 @@ import {
 import { keccak256 } from "@shared/utils/cryptography/keccak256.js";
 import { createWallet } from "@shared/utils/blockchain.js";
 import { ethers } from "ethers";
-
-// Lazy loading for Permit2 SDK
-// This is needed because the SDK is CommonJS and needs different loading strategies
-let SignatureTransfer: any = null;
+import chalk from "chalk";
 
 /**
  * Load Permit2 SDK (lazy initialization)
  * Handles both Node.js (CommonJS) and browser (ESM) environments
  */
 async function loadPermit2SDK() {
-  if (SignatureTransfer) return SignatureTransfer;
+  let permit2SDK;
 
   if (typeof window === 'undefined') {
     // Node.js environment - use createRequire for CommonJS
     const { createRequire } = await import('module');
     const require = createRequire(import.meta.url);
-    const permit2SDK = require("@uniswap/permit2-sdk");
-    SignatureTransfer = permit2SDK.SignatureTransfer;
+    permit2SDK = require("@uniswap/permit2-sdk");
   } else {
     // Browser environment - dynamic import
-    const permit2Module = await import('@uniswap/permit2-sdk');
-    SignatureTransfer = (permit2Module as any).SignatureTransfer;
+    permit2SDK = await import('@uniswap/permit2-sdk');
   }
 
-  return SignatureTransfer;
+  return permit2SDK;
 }
 
 /**
@@ -171,33 +164,37 @@ async function signTypedData(
  * For frontend use, call signTypedData with the result of SignatureTransfer.getPermitData
  *
  * @param permit - Permit2 data structure
- * @param permit2Address - Address of Permit2 contract
- * @param chainId - Chain ID (as number or bigint)
  * @param signer - Ethers signer (can be Wallet or JsonRpcSigner)
+ * @param chainId - Chain ID (as number or bigint)
  * @returns Signature string
  */
 async function signPermit2(
   permit: Permit2Data,
-  permit2Address: string,
-  chainId: number | bigint,
   signer: ethers.Signer,
+  chainId: number | bigint,
 ): Promise<string> {
   try {
+    console.log(chalk.blue("Generating EIP-712 signature..."));
+
     // Load Permit2 SDK lazily
-    const SDK = await loadPermit2SDK();
-    if (!SDK) {
+    const permit2SDK = await loadPermit2SDK();
+    if (!permit2SDK) {
       throw new Error('Failed to load Permit2 SDK');
     }
 
+    const { SignatureTransfer, PERMIT2_ADDRESS } = permit2SDK;
+
     // Get EIP-712 typed data from Permit2 SDK
-    const { domain, types, values } = SDK.getPermitData(
+    const { domain, types, values } = SignatureTransfer.getPermitData(
       permit,
-      permit2Address,
+      PERMIT2_ADDRESS,
       chainId,
     );
+    const signature = await signer.signTypedData(domain, types, values);
 
-    // Use the generic signTypedData function
-    return await signTypedData(domain, types, values, signer);
+    console.log(chalk.green("✅ Signature generated successfully"));
+
+    return signature;
   } catch (error) {
     throw new Error(
       `Permit2 signature failed: ${error instanceof Error ? error.message : "Unknown error"}`,

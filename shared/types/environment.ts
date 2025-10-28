@@ -9,7 +9,6 @@ interface PredictWill {
 
 interface PermitSigning {
   TESTATOR_PRIVATE_KEY: string;
-  PERMIT2: string;
 }
 
 interface UploadCid {

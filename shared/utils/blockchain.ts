@@ -1,10 +1,12 @@
 import { ethers, Wallet, JsonRpcProvider, Contract, formatUnits } from "ethers";
 import { ERC20_ABI } from "@shared/constants/blockchain.js";
 import { Will } from "@shared/types/typechain-types/index.js";
-import {
+import type {
   Estate,
   TokenBalance,
   WillContractInfo,
+  Permit2Data,
+  PermittedToken,
 } from "@shared/types/blockchain.js";
 import chalk from "chalk";
 
@@ -195,6 +197,41 @@ async function createContract<T extends Contract>(
   }
 }
 
+/**
+ * Create permit structure for signing
+ */
+function createPermitStructure(
+  estates: Estate[],
+  willAddress: string,
+  nonce: bigint,
+  deadline: number,
+): Permit2Data {
+  try {
+    console.log(chalk.blue("Creating permit structure..."));
+
+    const permitted: PermittedToken[] = estates.map((estate) => {
+      return {
+        token: estate.token,
+        amount: estate.amount,
+      };
+    });
+
+    const permit: Permit2Data = {
+      permitted,
+      spender: willAddress,
+      nonce,
+      deadline,
+    };
+
+    console.log(chalk.green("✅ Permit structure created"));
+    return permit;
+  } catch (error) {
+    throw new Error(
+      `Failed to create permit structure: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
 export {
   getTokenInfo,
   getTokenBalance,
@@ -203,4 +240,5 @@ export {
   createSigner,
   createWallet,
   createContract,
+  createPermitStructure,
 };

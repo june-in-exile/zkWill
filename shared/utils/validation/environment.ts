@@ -96,10 +96,9 @@ const presetValidations = {
   }),
 
   permitSigning: (): EnvironmentValidationOptions => ({
-    required: ["TESTATOR_PRIVATE_KEY", "PERMIT2"],
+    required: ["TESTATOR_PRIVATE_KEY"],
     validators: {
       TESTATOR_PRIVATE_KEY: validators.privateKey,
-      PERMIT2: validators.ethereumAddress,
     },
   }),
 

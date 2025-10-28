@@ -8,7 +8,8 @@ import type {
   DecryptedWill,
 } from "@shared/types/index.js";
 import { WILL_TYPE } from "@shared/constants/will.js";
-import { getKey, decrypt } from "@shared/utils/cryptography/index.js";
+import { getKey } from "@shared/utils/cryptography/key.js";
+import { decrypt } from "@shared/utils/cryptography/decrypt.js";
 import { readWill, saveWill } from "@shared/utils/file/index.js";
 import chalk from "chalk";
 

@@ -5,11 +5,9 @@ import type {
   EncryptedWill,
 } from "@shared/types/index.js";
 import { WILL_TYPE } from "@shared/constants/will.js";
-import {
-  generateKey,
-  generateInitializationVector,
-  encrypt,
-} from "@shared/utils/cryptography/index.js";
+// import { generateKey } from "@shared/utils/cryptography/key.js";
+// import { generateInitializationVector } from "@shared/utils/cryptography/initializationVector.js";
+import { encrypt } from "@shared/utils/cryptography/encrypt.js";
 import { readWill, saveWill } from "@shared/utils/file/index.js";
 import preview from "@shared/utils/transform/preview.js";
 import chalk from "chalk";
@@ -36,8 +34,10 @@ function getEncryptionArgs(): EncryptionArgs {
     hexString,
     CRYPTO_CONFIG.plaintextEncoding,
   );
-  const key = generateKey();
-  const iv = generateInitializationVector();
+  // const key = generateKey();
+  const key = Buffer.from("z6Nn/viwn4mwUW8KC2DCJycs8JyD2T7xkQKOFjMmidM=", 'base64');
+  // const iv = generateInitializationVector();
+  const iv = Buffer.from("DGon+2oDuOg5yCIjK5Cqyw==", 'base64');
 
   return { algorithm, plaintext, key, iv };
 }

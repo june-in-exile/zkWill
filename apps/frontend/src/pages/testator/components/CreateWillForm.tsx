@@ -9,12 +9,12 @@ interface Props {
 const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
   // Load default values from environment
   const defaultExecutor = import.meta.env.VITE_DEFAULT_EXECUTOR || '';
-  const defaultEstates: Array<{ address: string; token: string; amount: string }> = [];
+  const defaultEstates: Array<{ beneficiary: string; token: string; amount: string }> = [];
 
   // Add first estate if available
   if (import.meta.env.VITE_DEFAULT_BENEFICIARY0) {
     defaultEstates.push({
-      address: import.meta.env.VITE_DEFAULT_BENEFICIARY0 || '',
+      beneficiary: import.meta.env.VITE_DEFAULT_BENEFICIARY0 || '',
       token: import.meta.env.VITE_DEFAULT_TOKEN0 || '',
       amount: import.meta.env.VITE_DEFAULT_AMOUNT0 || '',
     });
@@ -23,7 +23,7 @@ const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
   // Add second estate if available
   if (import.meta.env.VITE_DEFAULT_BENEFICIARY1) {
     defaultEstates.push({
-      address: import.meta.env.VITE_DEFAULT_BENEFICIARY1 || '',
+      beneficiary: import.meta.env.VITE_DEFAULT_BENEFICIARY1 || '',
       token: import.meta.env.VITE_DEFAULT_TOKEN1 || '',
       amount: import.meta.env.VITE_DEFAULT_AMOUNT1 || '',
     });
@@ -31,14 +31,14 @@ const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
 
   // If no defaults found, add one empty estate
   if (defaultEstates.length === 0) {
-    defaultEstates.push({ address: '', token: '', amount: '' });
+    defaultEstates.push({ beneficiary: '', token: '', amount: '' });
   }
 
   const [executor, setExecutor] = useState(defaultExecutor);
   const [estates, setEstates] = useState(defaultEstates);
 
   const addEstate = () => {
-    setEstates([...estates, { address: '', token: '', amount: '' }]);
+    setEstates([...estates, { beneficiary: '', token: '', amount: '' }]);
   };
 
   const removeEstate = (index: number) => {
@@ -57,7 +57,7 @@ const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
       testator: testatorAddress,
       executor,
       estates: estates.map((estate) => ({
-        address: estate.address,
+        beneficiary: estate.beneficiary,
         token: estate.token,
         amount: estate.amount,
       })),
@@ -92,8 +92,8 @@ const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
               <label>Beneficiary Address *</label>
               <input
                 type="text"
-                value={estate.address}
-                onChange={(e) => updateEstate(index, 'address', e.target.value)}
+                value={estate.beneficiary}
+                onChange={(e) => updateEstate(index, 'beneficiary', e.target.value)}
                 placeholder="0x..."
                 required
               />

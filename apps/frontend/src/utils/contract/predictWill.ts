@@ -1,12 +1,6 @@
-/**
- * Predict Will contract address using CREATE2
- */
-
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESSES } from '@/config/contracts';
 import type { WillData } from '@/pages/testator/TestatorPage';
-
-// Note: generateSalt is now provided by backend API via utils/api/client.ts
 
 /**
  * Predict Will contract address using CREATE2
@@ -27,7 +21,7 @@ export const predictWillAddress = async (
 
   // Format estates for contract call
   const estatesForContract = willData.estates.map((e) => ({
-    beneficiary: e.address,
+    beneficiary: e.beneficiary,
     token: e.token,
     amount: BigInt(e.amount),
   }));

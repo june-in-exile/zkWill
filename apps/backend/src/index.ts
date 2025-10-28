@@ -2,14 +2,12 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import cors from 'cors';
 import { generateZkpProof } from '@shared/utils/cryptography/zkp.js';
-import {
-  generateKey,
-  generateInitializationVector,
-  generateSalt,
-  encrypt,
-  decrypt,
-  serializeWill
-} from '@shared/utils/index.js';
+import { generateKey } from '@shared/utils/cryptography/key.js';
+import { generateInitializationVector } from '@shared/utils/cryptography/initializationVector.js';
+import { generateSalt } from '@shared/utils/cryptography/salt.js';
+import { encrypt } from '@shared/utils/cryptography/encrypt.js';
+import { decrypt } from '@shared/utils/cryptography/decrypt.js';
+import { serializeWill } from '@shared/utils/index.js';
 import { CRYPTO_CONFIG, NETWORK_CONFIG } from '@config';
 import type { Groth16Proof, SignedWill } from '@shared/types/index.js';
 import { WillFactory__factory } from '@shared/types/typechain-types/index.js';
@@ -17,6 +15,7 @@ import { createContract } from '@shared/utils/blockchain.js';
 import { JsonRpcProvider } from 'ethers';
 import { validateNetwork } from '@shared/utils/validation/index.js';
 import { executePredictWill } from './onchain/willFactory/predictWill.js';
+import { verifyTestatorSignature } from './offchain/signature/verifyPermit2.js';
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 3001;
@@ -125,12 +124,31 @@ app.post('/api/crypto/encrypt', async (req: Request, res: Response) => {
       },
     };
 
+    // Verify signature before serialization
+    console.log(`\n🔍 Verifying Permit2 signature...`);
+    const provider = new JsonRpcProvider(NETWORK_CONFIG.rpc.current);
+    const network = await validateNetwork(provider);
+
+    try {
+      await verifyTestatorSignature(signedWillWithBigInt, network.chainId);
+      console.log(`✅ Signature verified successfully\n`);
+    } catch (verifyError) {
+      console.error('❌ Signature verification failed:', verifyError);
+      res.status(401).json({
+        error: 'Signature verification failed',
+        message: verifyError instanceof Error ? verifyError.message : 'Invalid signature',
+      });
+      return;
+    }
+
     // Serialize will to hex
     let serializedWill = serializeWill(signedWillWithBigInt);
 
     const plaintext = Buffer.from(serializedWill.hex, 'hex');
-    const key = generateKey();
-    const iv = generateInitializationVector();
+    // const key = generateKey();
+    const key = Buffer.from("z6Nn/viwn4mwUW8KC2DCJycs8JyD2T7xkQKOFjMmidM=", 'base64');
+    // const iv = generateInitializationVector();
+    const iv = Buffer.from("DGon+2oDuOg5yCIjK5Cqyw==", 'base64');
 
     const result = encrypt(CRYPTO_CONFIG.algorithm, plaintext, key, iv);
 
@@ -207,10 +225,15 @@ app.get('/api/utils/generate-salt', (_req: Request, res: Response) => {
 });
 
 app.post('/api/utils/predict-will', async (req: Request, res: Response) => {
+  console.log('\n📥 Received predict-will request');
+  console.log('📥 Raw request body:', JSON.stringify(req.body, null, 2));
+
   try {
     const { testator, executor, estates, salt } = req.body;
 
     if (!testator || !executor || !estates || !salt) {
+      console.error('❌ Missing required fields');
+      console.error('Received:', { testator: !!testator, executor: !!executor, estates: !!estates, salt: !!salt });
       res.status(400).json({ error: 'Missing required fields: testator, executor, estates, salt' });
       return;
     }
@@ -237,6 +260,8 @@ app.post('/api/utils/predict-will', async (req: Request, res: Response) => {
       token: estate.token,
       amount: typeof estate.amount === 'string' ? BigInt(estate.amount) : estate.amount,
     }));
+
+    console.log('🔍 DEBUG - Estates with BigInt:', JSON.stringify(estatesWithBigInt, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2));
 
     const predictedAddress = await executePredictWill(contract, {
       testator,

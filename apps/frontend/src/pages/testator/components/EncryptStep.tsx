@@ -107,19 +107,23 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
     try {
       // Step 1: Generate salt via backend API
       setProgress('Generating salt for Will contract...');
-      const saltString = await generateSaltAPI();
+      // const saltString = await generateSaltAPI();
+      const saltString = "50488959960934814917696171139809710418977764484544753035433637781874432512215";
       const salt = BigInt(saltString);
 
       // Step 2: Predict Will contract address via backend API
       setProgress('Predicting Will contract address...');
+      console.log('🔍 DEBUG - willData.estates:', willData.estates);
+      const estatesForAPI = willData.estates.map((e) => ({
+        beneficiary: e.beneficiary,
+        token: e.token,
+        amount: e.amount,
+      }));
+      console.log('🔍 DEBUG - estatesForAPI:', estatesForAPI);
       const willAddress = await predictWillAddressAPI(
         willData.testator,
         willData.executor,
-        willData.estates.map((e) => ({
-          beneficiary: e.address,
-          token: e.token,
-          amount: e.amount,
-        })),
+        estatesForAPI,
         saltString
       );
 
@@ -147,7 +151,7 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
         testator: willData.testator,
         executor: willData.executor,
         estates: willData.estates.map((b) => ({
-          beneficiary: b.address,
+          beneficiary: b.beneficiary,
           token: b.token,
           amount: b.amount,
         })),
@@ -155,22 +159,76 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
         will: willAddress,
         permit2: {
           nonce: permit2Data.nonce.toString(),
-          deadline: permit2Data.deadline, // Already a number
+          deadline: permit2Data.deadline,
           signature: permit2Data.signature,
         },
       };
 
       setSignedWillData(signedWill);
 
+      // Debug: Log signed will data
+      console.log('🔍 DEBUG - Signed Will:', JSON.stringify(signedWill, null, 2));
+
       // Step 5 & 6: Serialize and encrypt via backend API (combined)
       setProgress('Serializing and encrypting will via backend...');
       const encryptedResult = await encryptWillAPI(signedWill);
+
+      // Debug: Log encrypted result
+      const ciphertextBase64 = btoa(String.fromCharCode(...encryptedResult.ciphertext));
+      const ivBase64 = btoa(String.fromCharCode(...encryptedResult.iv));
+      const authTagBase64 = btoa(String.fromCharCode(...encryptedResult.authTag));
+
+      console.log('🔐 DEBUG - Encrypted Result (Summary):', {
+        algorithm: encryptedResult.algorithm,
+        ivLength: encryptedResult.iv.length,
+        authTagLength: encryptedResult.authTag.length,
+        ciphertextLength: encryptedResult.ciphertext.length,
+        timestamp: new Date(encryptedResult.timestamp * 1000).toISOString(),
+        keyLength: encryptedResult.key.length
+      });
+      console.log('🔐 DEBUG - Ciphertext (base64):', ciphertextBase64);
+      console.log('🔐 DEBUG - Ciphertext (array):', encryptedResult.ciphertext);
+      console.log('🔐 DEBUG - IV (base64):', ivBase64);
+      console.log('🔐 DEBUG - IV (array):', encryptedResult.iv);
+      console.log('🔐 DEBUG - Auth Tag (base64):', authTagBase64);
+      console.log('🔐 DEBUG - Auth Tag (array):', encryptedResult.authTag);
+
+      // Debug: Test decryption immediately
+      try {
+        setProgress('Testing decryption...');
+        console.log('🧪 DEBUG - Testing decryption with backend API...');
+
+        const { decryptWill: decryptWillAPI } = await import('@utils/api/client');
+        const decryptedResult = await decryptWillAPI(
+          encryptedResult.ciphertext,
+          encryptedResult.key,
+          encryptedResult.iv,
+          encryptedResult.algorithm
+        );
+
+        console.log('✅ DEBUG - Decryption successful!');
+        console.log('🔓 DEBUG - Decrypted plaintext (hex):', decryptedResult.hex);
+        console.log('🔓 DEBUG - Decrypted plaintext (array):', decryptedResult.plaintext);
+
+        // Convert hex to readable format for comparison
+        const decryptedHex = decryptedResult.hex;
+        console.log('🔍 DEBUG - Decrypted hex length:', decryptedHex.length);
+      } catch (decryptError) {
+        console.error('❌ DEBUG - Decryption test failed:', decryptError);
+      }
 
       // Step 7: Download encryption key for user
       setProgress('Downloading encryption key...');
       const keyHexForDownload = encryptedResult.key
         .map((b) => b.toString(16).padStart(2, '0'))
         .join('');
+
+      // Debug: Log encryption key
+      const keyBase64 = btoa(String.fromCharCode(...encryptedResult.key));
+      console.log('🔑 DEBUG - Encryption Key (hex):', keyHexForDownload);
+      console.log('🔑 DEBUG - Encryption Key (base64):', keyBase64);
+      console.log('🔑 DEBUG - Encryption Key (array):', encryptedResult.key);
+
       const keyBlob = new Blob([keyHexForDownload], { type: 'text/plain' });
       const url = URL.createObjectURL(keyBlob);
       const a = document.createElement('a');

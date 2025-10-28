@@ -20,7 +20,8 @@ template VerifyPermit(numPermission) {
     input EcdsaSignature() signature;
 
     var n = 64, k = 4;
-    var chainId = 31337;
+    // var chainId = 31337; // Anvil
+    var chainId = 421614; // Arbitrum Sepolia
 
     // Hashes permit to get typed permit digest
     signal {bit} permitDigest[256] <== HashPermit(numPermission)(permit, will);

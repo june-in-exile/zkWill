@@ -1,8 +1,6 @@
-import { PATHS_CONFIG, PERMIT2_CONFIG, NETWORK_CONFIG } from "@config";
+import { PATHS_CONFIG, NETWORK_CONFIG } from "@config";
 import type {
   Permit2Data,
-  PermittedToken,
-  Estate,
   PermitSigning,
   AddressedWill,
   SignedWill,
@@ -18,22 +16,14 @@ import {
   readWill,
   saveWill,
 } from "@shared/utils/file/index.js";
-import { generateNonce } from "@shared/utils/cryptography/index.js";
-import { signPermit2 } from "@shared/utils/cryptography/signature.js";
-import { createSigner } from "@shared/utils/blockchain.js";
+import {
+  // generateNonce, calculateDeadline,
+  signPermit2,
+} from "@shared/utils/cryptography/index.js";
+import { createSigner, createPermitStructure } from "@shared/utils/blockchain.js";
 import preview from "@shared/utils/transform/preview.js";
-import { JsonRpcProvider, Wallet } from "ethers";
-import { createRequire } from "module";
+import { JsonRpcProvider } from "ethers";
 import chalk from "chalk";
-
-const require = createRequire(import.meta.url);
-
-// Load Permit2 SDK for getting default PERMIT2 address
-const permit2SDK = require("@uniswap/permit2-sdk");
-
-// Using Permit2Data from shared utils
-// Keep local alias for backward compatibility
-type Permit = Permit2Data;
 
 interface ProcessResult {
   nonce: bigint;
@@ -56,72 +46,13 @@ function validateEnvironmentVariables(): PermitSigning {
       `Environment validation failed: ${result.errors.join(", ")}`,
     );
   }
-
-  // Handle default PERMIT2 address from SDK if not provided
-  if (!result.data.PERMIT2) {
-    result.data.PERMIT2 = permit2SDK.PERMIT2;
-  }
-
   return result.data;
-}
-
-/**
- * Calculate deadline timestamp
- */
-function calculatePermitDeadline(
-  durationMs: number = PERMIT2_CONFIG.defaultDuration,
-): number {
-  console.log(chalk.blue("Calculating deadline..."));
-
-  const endTimeMs = Date.now() + durationMs;
-  const endTimeSeconds = Math.floor(endTimeMs / 1000);
-
-  console.log(
-    chalk.gray("Signature valid until:"),
-    new Date(endTimeSeconds * 1000).toISOString(),
-  );
-  return endTimeSeconds;
-}
-
-/**
- * Create permit structure for signing
- */
-function createPermitStructure(
-  estates: Estate[],
-  willAddress: string,
-  nonce: bigint,
-  deadline: number,
-): Permit {
-  try {
-    console.log(chalk.blue("Creating permit structure..."));
-
-    const permitted: PermittedToken[] = estates.map((estate) => {
-      return {
-        token: estate.token,
-        amount: estate.amount,
-      };
-    });
-
-    const permit: Permit = {
-      permitted,
-      spender: willAddress,
-      nonce,
-      deadline,
-    };
-
-    console.log(chalk.green("✅ Permit structure created"));
-    return permit;
-  } catch (error) {
-    throw new Error(
-      `Failed to create permit structure: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
-  }
 }
 
 /**
  * Print detailed Permit information
  */
-function printPermit(permit: Permit): void {
+function printPermit(permit: Permit2Data): void {
   console.log(chalk.cyan("\n=== Permit Details ===\n"));
 
   permit.permitted.forEach((estate, index) => {
@@ -142,37 +73,11 @@ function printPermit(permit: Permit): void {
 }
 
 /**
- * Sign permit using EIP-712
- * Now uses the shared signPermit2 function from @shared/utils/cryptography/signature.js
- */
-async function signPermit2Local(
-  permit: Permit,
-  permit2Address: string,
-  chainId: bigint,
-  signer: Wallet,
-): Promise<string> {
-  try {
-    console.log(chalk.blue("Generating EIP-712 signature..."));
-
-    // Use the shared signPermit2 function to ensure consistency
-    const signature = await signPermit2(permit, permit2Address, chainId, signer);
-
-    console.log(chalk.green("✅ Signature generated successfully"));
-
-    return signature;
-  } catch (error) {
-    throw new Error(
-      `Failed to sign permit: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
-  }
-}
-
-/**
  * Process will signing workflow
  */
 async function processPermitSigning(): Promise<ProcessResult> {
   try {
-    const { TESTATOR_PRIVATE_KEY, PERMIT2 } = validateEnvironmentVariables();
+    const { TESTATOR_PRIVATE_KEY } = validateEnvironmentVariables();
 
     const provider = new JsonRpcProvider(NETWORK_CONFIG.rpc.current);
     const network = await validateNetwork(provider);
@@ -182,8 +87,10 @@ async function processPermitSigning(): Promise<ProcessResult> {
     const willData: AddressedWill = readWill(WILL_TYPE.ADDRESSED);
 
     console.log(chalk.blue("Generating signature parameters..."));
-    const nonce = generateNonce();
-    const deadline = calculatePermitDeadline();
+    // const nonce = generateNonce();
+    // const deadline = calculateDeadline();
+    const nonce = 94291489168460372312063129039338610341n;
+    const deadline = 4915260772;
 
     const permit = createPermitStructure(
       willData.estates,
@@ -194,12 +101,7 @@ async function processPermitSigning(): Promise<ProcessResult> {
 
     printPermit(permit);
 
-    const signature = await signPermit2Local(
-      permit,
-      PERMIT2,
-      network.chainId,
-      signer,
-    );
+    const signature = await signPermit2(permit, signer, network.chainId);
 
     const signedWillData: SignedWill = {
       ...willData,

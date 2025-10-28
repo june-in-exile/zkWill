@@ -30,7 +30,7 @@ export default defineConfig({
     react(),
     nodePolyfills({
       // Enable specific polyfills
-      include: ['path', 'buffer', 'process', 'util', 'url', 'stream'],
+      include: ['path', 'buffer', 'process', 'util', 'url', 'stream', 'crypto'],
       // Inject global variables
       globals: {
         Buffer: true,

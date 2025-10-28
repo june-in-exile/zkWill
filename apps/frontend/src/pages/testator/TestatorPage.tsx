@@ -11,7 +11,7 @@ export interface WillData {
   testator: string;
   executor: string;
   estates: Array<{
-    address: string;
+    beneficiary: string;
     token: string;
     amount: string;
   }>;

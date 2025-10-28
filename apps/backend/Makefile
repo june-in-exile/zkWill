@@ -28,7 +28,7 @@ clean:
 	@@echo "Initialization completed"
 
 
-testatorUploadsEncryptedWill: approve-permit2 predict-address sign-permit2 serialize-will encrypt-will prove-for-cid-upload upload-will upload-cid
+testatorUploadsEncryptedWill: approve-permit2 predict-address sign-permit2 verify-permit2 serialize-will encrypt-will prove-for-cid-upload upload-will upload-cid
 
 approve-permit2:
 	@pnpm exec tsx src/onchain/permit2/approveTokenPermit2.ts
@@ -38,6 +38,9 @@ predict-address:
 
 sign-permit2:
 	@pnpm exec tsx src/offchain/signature/permit2.ts
+
+verify-permit2:
+	@pnpm exec tsx src/offchain/signature/verifyPermit2.ts
 
 serialize-will:
 	@pnpm exec tsx src/offchain/serialization/serialize.ts
@@ -88,7 +91,7 @@ signature-transfer:
 	@pnpm exec tsx src/onchain/will/signatureTransfer.ts
 
 
-utils: keccak256 encrypt-data decrypt-data decrypt-will-local cid-data cid-path submit-proof
+utils: keccak256 verify-permit2 encrypt-data decrypt-data decrypt-will-local cid-data cid-path submit-proof
 
 keccak256:
 	@pnpm exec tsx ../../shared/utils/cryptography/keccak256.ts \
@@ -151,3 +154,6 @@ cid-path:
 
 submit-proof:
 	@pnpm exec tsx src/onchain/groth16Verifier/submitProof.ts
+
+
+# approve-permit2 predict-address sign-permit2 verify-permit2
