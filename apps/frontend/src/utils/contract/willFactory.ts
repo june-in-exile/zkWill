@@ -38,10 +38,6 @@ export const uploadCid = async (
 ) => {
   const contract = getWillFactoryContract(signer);
 
-  console.log("DEBUG - proof:", proof);
-  console.log("DEBUG - will:", will);
-  console.log("DEBUG - cid:", cid);
-
   const tx = await contract.uploadCid(
     proof.pi_a,
     proof.pi_b,

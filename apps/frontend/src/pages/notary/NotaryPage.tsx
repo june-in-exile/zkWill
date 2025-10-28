@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@hooks/useWallet';
-import { notarizeCid } from '@utils/contract/willFactory';
+import { notarizeCid, getWillFactoryContract } from '@utils/contract/willFactory';
 import './NotaryPage.css';
 
 interface PendingWill {
@@ -11,11 +11,13 @@ interface PendingWill {
 }
 
 const NotaryPage: React.FC = () => {
-  const { isConnected, signer } = useWallet();
+  const { isConnected, signer, address } = useWallet();
   const [cidInput, setCidInput] = useState('');
   const [isNotarizing, setIsNotarizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [notaryAddress, setNotaryAddress] = useState<string | null>(null);
+  const [isCheckingNotary, setIsCheckingNotary] = useState(false);
 
   // Mock pending wills - in real app, fetch from contract
   const [pendingWills] = useState<PendingWill[]>([
@@ -26,6 +28,29 @@ const NotaryPage: React.FC = () => {
       isNotarized: false,
     },
   ]);
+
+  // Fetch notary address from contract
+  useEffect(() => {
+    const fetchNotaryAddress = async () => {
+      if (!signer) return;
+
+      setIsCheckingNotary(true);
+      try {
+        const contract = getWillFactoryContract(signer);
+        const notary = await contract.notary();
+        setNotaryAddress(notary);
+      } catch (err) {
+        console.error('Failed to fetch notary address:', err);
+      } finally {
+        setIsCheckingNotary(false);
+      }
+    };
+
+    fetchNotaryAddress();
+  }, [signer]);
+
+  // Check if current user is the notary
+  const isNotary = notaryAddress && address && notaryAddress.toLowerCase() === address.toLowerCase();
 
   const handleNotarize = async (cid: string) => {
     if (!signer) {
@@ -80,6 +105,33 @@ const NotaryPage: React.FC = () => {
         <p>Review and notarize uploaded wills</p>
       </div>
 
+      {/* Account verification warning */}
+      {!isCheckingNotary && notaryAddress && !isNotary && (
+        <div className="card warning-card">
+          <h3>⚠️ Wrong Account</h3>
+          <p>You are not authorized to notarize wills.</p>
+          <div className="account-details">
+            <div>
+              <strong>Your address:</strong>
+              <code>{address}</code>
+            </div>
+            <div>
+              <strong>Required notary address:</strong>
+              <code>{notaryAddress}</code>
+            </div>
+          </div>
+          <p className="help-text">
+            Please switch to the notary account in your wallet to continue.
+          </p>
+        </div>
+      )}
+
+      {isNotary && (
+        <div className="card success-card">
+          <p>✓ Authorized as Notary</p>
+        </div>
+      )}
+
       <div className="card">
         <h2>Manual Notarization</h2>
         <form onSubmit={handleManualNotarize} className="notarize-form">
@@ -93,9 +145,12 @@ const NotaryPage: React.FC = () => {
               disabled={isNotarizing}
             />
           </div>
-          <button type="submit" disabled={isNotarizing}>
+          <button type="submit" disabled={isNotarizing || !isNotary}>
             {isNotarizing ? 'Notarizing...' : 'Notarize CID'}
           </button>
+          {!isNotary && notaryAddress && (
+            <p className="disabled-hint">Button disabled: Wrong account</p>
+          )}
         </form>
 
         {error && <div className="error">{error}</div>}
@@ -103,7 +158,7 @@ const NotaryPage: React.FC = () => {
       </div>
 
       <div className="card">
-        <h2>Pending Wills</h2>
+        <h2>Pending Wills (Mocked)</h2>
         {pendingWills.length === 0 ? (
           <p className="empty-state">No pending wills to notarize</p>
         ) : (
@@ -127,7 +182,7 @@ const NotaryPage: React.FC = () => {
                 {!will.isNotarized && (
                   <button
                     onClick={() => handleNotarize(will.cid)}
-                    disabled={isNotarizing}
+                    disabled={isNotarizing || !isNotary}
                     className="btn-notarize"
                   >
                     Notarize

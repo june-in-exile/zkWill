@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '@hooks/useWallet';
-import { probateCid } from '@utils/contract/willFactory';
+import { probateCid, getWillFactoryContract } from '@utils/contract/willFactory';
 import './OraclePage.css';
 
 interface NotarizedWill {
@@ -11,11 +11,13 @@ interface NotarizedWill {
 }
 
 const OraclePage: React.FC = () => {
-  const { isConnected, signer } = useWallet();
+  const { isConnected, signer, address } = useWallet();
   const [cidInput, setCidInput] = useState('');
   const [isProbating, setIsProbating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [oracleAddress, setOracleAddress] = useState<string | null>(null);
+  const [isCheckingOracle, setIsCheckingOracle] = useState(false);
 
   // Mock notarized wills - in real app, fetch from contract
   const [notarizedWills] = useState<NotarizedWill[]>([
@@ -26,6 +28,29 @@ const OraclePage: React.FC = () => {
       isProbated: false,
     },
   ]);
+
+  // Fetch oracle address from contract
+  useEffect(() => {
+    const fetchOracleAddress = async () => {
+      if (!signer) return;
+
+      setIsCheckingOracle(true);
+      try {
+        const contract = getWillFactoryContract(signer);
+        const oracle = await contract.oracle();
+        setOracleAddress(oracle);
+      } catch (err) {
+        console.error('Failed to fetch oracle address:', err);
+      } finally {
+        setIsCheckingOracle(false);
+      }
+    };
+
+    fetchOracleAddress();
+  }, [signer]);
+
+  // Check if current user is the oracle
+  const isOracle = oracleAddress && address && oracleAddress.toLowerCase() === address.toLowerCase();
 
   const handleProbate = async (cid: string) => {
     if (!signer) {
@@ -80,6 +105,33 @@ const OraclePage: React.FC = () => {
         <p>Authorize will execution after death confirmation</p>
       </div>
 
+      {/* Account verification warning */}
+      {!isCheckingOracle && oracleAddress && !isOracle && (
+        <div className="card account-warning-card">
+          <h3>⚠️ Wrong Account</h3>
+          <p>You are not authorized to probate wills.</p>
+          <div className="account-details">
+            <div>
+              <strong>Your address:</strong>
+              <code>{address}</code>
+            </div>
+            <div>
+              <strong>Required oracle address:</strong>
+              <code>{oracleAddress}</code>
+            </div>
+          </div>
+          <p className="help-text">
+            Please switch to the oracle account in your wallet to continue.
+          </p>
+        </div>
+      )}
+
+      {isOracle && (
+        <div className="card success-card">
+          <p>✓ Authorized as Oracle</p>
+        </div>
+      )}
+
       <div className="warning-card">
         <h3>⚠️ Important Notice</h3>
         <p>
@@ -102,9 +154,12 @@ const OraclePage: React.FC = () => {
               disabled={isProbating}
             />
           </div>
-          <button type="submit" disabled={isProbating}>
+          <button type="submit" disabled={isProbating || !isOracle}>
             {isProbating ? 'Probating...' : 'Probate CID'}
           </button>
+          {!isOracle && oracleAddress && (
+            <p className="disabled-hint">Button disabled: Wrong account</p>
+          )}
         </form>
 
         {error && <div className="error">{error}</div>}
@@ -112,7 +167,7 @@ const OraclePage: React.FC = () => {
       </div>
 
       <div className="card">
-        <h2>Notarized Wills</h2>
+        <h2>Notarized Wills (Mocked)</h2>
         {notarizedWills.length === 0 ? (
           <p className="empty-state">No notarized wills available</p>
         ) : (
@@ -136,7 +191,7 @@ const OraclePage: React.FC = () => {
                 {!will.isProbated && (
                   <button
                     onClick={() => handleProbate(will.cid)}
-                    disabled={isProbating}
+                    disabled={isProbating || !isOracle}
                     className="btn-probate"
                   >
                     Probate

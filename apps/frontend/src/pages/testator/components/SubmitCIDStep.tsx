@@ -2,17 +2,8 @@ import React, { useState } from 'react';
 import { generateCidUploadProof } from '@utils/api/client';
 import { uploadCid } from '@utils/contract/willFactory';
 import { useWallet } from '@hooks/useWallet';
+import { formatProofForContract } from '@utils/zkp/snarkjs';
 import type { EncryptedData } from '../TestatorPage';
-
-// Format ZKP proof from backend for contract submission
-function formatProofForContract(proof: any) {
-  return {
-    pi_a: proof.proof.pi_a.slice(0, 2),
-    pi_b: proof.proof.pi_b.slice(0, 2).map((arr: string[]) => arr.slice(0, 2)),
-    pi_c: proof.proof.pi_c.slice(0, 2),
-    publicSignals: proof.publicSignals,
-  };
-}
 
 // Convert EncryptedData to TypedJsonObject format for contract
 function encryptedDataToTypedJsonObject(encryptedData: EncryptedData) {

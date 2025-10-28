@@ -89,3 +89,66 @@
   color: rgba(255, 255, 255, 0.5);
   padding: 2rem;
 }
+
+/* Account verification styles */
+.warning-card {
+  background-color: #3d2200;
+  border-left: 4px solid #ffa500;
+}
+
+.warning-card h3 {
+  color: #ffa500;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.success-card {
+  background-color: #002d1a;
+  border-left: 4px solid var(--success-color);
+  padding: 1rem;
+  text-align: center;
+}
+
+.success-card p {
+  color: var(--success-color);
+  margin: 0;
+  font-weight: 600;
+}
+
+.account-details {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.account-details strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.account-details code {
+  background-color: #1a1a1a;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: block;
+  font-size: 0.875rem;
+  word-break: break-all;
+}
+
+.help-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  margin-bottom: 0;
+}
+
+.disabled-hint {
+  color: #ffa500;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
