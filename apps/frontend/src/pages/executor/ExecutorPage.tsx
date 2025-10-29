@@ -5,6 +5,7 @@ import { decryptWill as decryptWillAPI, generateWillCreationProof } from '@utils
 import { createWill } from '@utils/contract/willFactory';
 import { signatureTransferToBeneficiaries } from '@utils/contract/will';
 import { encryptedWillToTypedJsonObject } from '@utils/transform/encryptedWill';
+import { formatProofForContract } from '@utils/zkp/snarkjs';
 import './ExecutorPage.css';
 
 interface Estate {
@@ -42,6 +43,11 @@ const ExecutorPage: React.FC = () => {
   const [proof, setProof] = useState<any>(null);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('');
+  const [transactionRecords, setTransactionRecords] = useState<{
+    createWillTx?: string;
+    transferTx?: string;
+    willAddress?: string;
+  } | null>(null);
 
   const handleDownload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,6 +184,18 @@ const ExecutorPage: React.FC = () => {
     }
   };
 
+  const handleReset = () => {
+    setCurrentStep(1);
+    setCid('');
+    setKeyInput('');
+    setEncryptedWill(null);
+    setDecryptedWill(null);
+    setProof(null);
+    setStatus('');
+    setError(null);
+    setTransactionRecords(null);
+  };
+
   const handleExecute = async () => {
     if (!proof || !decryptedWill || !signer || !encryptedWill) return;
 
@@ -193,22 +211,14 @@ const ExecutorPage: React.FC = () => {
 
       // Convert encrypted will to TypedJsonObject format for contract
       const willObject = encryptedWillToTypedJsonObject(encryptedWill);
-      console.log('Will object keys:', willObject.keys);
-      console.log('Will object values length:', willObject.values.length);
 
-      // Debug: Log proof structure
-      console.log('Proof structure:', {
-        pi_a: proof.proof.pi_a,
-        pi_b: proof.proof.pi_b,
-        pi_c: proof.proof.pi_c,
-        publicSignals_length: proof.publicSignals.length,
-        publicSignals_sample: proof.publicSignals.slice(0, 5)
-      });
+      // Format proof for contract (same as testator flow)
+      const formattedProof = formatProofForContract(proof);
 
       const createReceipt = await createWill(
         signer,
         cid,
-        proof,
+        formattedProof,
         willObject
       );
 
@@ -229,23 +239,17 @@ const ExecutorPage: React.FC = () => {
 
       console.log('Transfers completed!', transferReceipt);
 
-      alert('Will executed successfully! Assets transferred to beneficiaries.');
+      // Save transaction records
+      setTransactionRecords({
+        createWillTx: createReceipt.hash,
+        transferTx: transferReceipt.hash,
+        willAddress: willAddress
+      });
 
-      // Reset
-      setCurrentStep(1);
-      setCid('');
-      setKeyInput('');
-      setEncryptedWill(null);
-      setDecryptedWill(null);
-      setProof(null);
-      setStatus('');
+      setStatus('Will executed successfully!');
+      setCurrentStep(5); // Move to success display step
     } catch (err) {
       console.error('Execution failed:', err);
-      console.error('Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        stack: err instanceof Error ? err.stack : 'No stack trace',
-        error: err
-      });
       setError(err instanceof Error ? err.message : 'Execution failed');
     } finally {
       setIsLoading(false);
@@ -283,7 +287,7 @@ const ExecutorPage: React.FC = () => {
           <div className="step-number">3</div>
           <div className="step-label">Generate Proof</div>
         </div>
-        <div className={`step ${currentStep >= 4 ? 'active' : ''} ${currentStep > 4 ? 'completed' : ''}`}>
+        <div className={`step ${currentStep >= 4 ? 'active' : ''} ${currentStep >= 5 ? 'completed' : ''}`}>
           <div className="step-number">4</div>
           <div className="step-label">Execute</div>
         </div>
@@ -490,6 +494,156 @@ const ExecutorPage: React.FC = () => {
 
             <button onClick={handleExecute} disabled={isLoading} className="btn-execute">
               {isLoading ? `Executing... (${status})` : 'Execute Will & Transfer Assets'}
+            </button>
+          </div>
+        )}
+
+        {currentStep === 5 && transactionRecords && decryptedWill && (
+          <div className="success-container" style={{
+            background: 'rgba(76, 175, 80, 0.1)',
+            border: '2px solid var(--success-color)',
+            borderRadius: '12px',
+            padding: '2rem',
+            marginTop: '1rem'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🎉</div>
+              <h3 style={{ color: 'var(--success-color)', marginTop: 0 }}>
+                Will Executed Successfully!
+              </h3>
+              <p style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                Assets have been transferred to all beneficiaries
+              </p>
+            </div>
+
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.3)',
+              padding: '1.5rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem'
+            }}>
+              <h4 style={{ color: 'var(--success-color)', marginTop: 0, marginBottom: '1rem' }}>
+                Transaction Records
+              </h4>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '0.9rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  Will Contract Address:
+                </label>
+                <code style={{
+                  display: 'block',
+                  wordBreak: 'break-all',
+                  background: '#1a1a1a',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--success-color)',
+                  fontSize: '0.9rem'
+                }}>
+                  {transactionRecords.willAddress}
+                </code>
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '0.9rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  Create Will Transaction:
+                </label>
+                <code style={{
+                  display: 'block',
+                  wordBreak: 'break-all',
+                  background: '#1a1a1a',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontSize: '0.85rem'
+                }}>
+                  {transactionRecords.createWillTx}
+                </code>
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '0.9rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  Asset Transfer Transaction:
+                </label>
+                <code style={{
+                  display: 'block',
+                  wordBreak: 'break-all',
+                  background: '#1a1a1a',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontSize: '0.85rem'
+                }}>
+                  {transactionRecords.transferTx}
+                </code>
+              </div>
+            </div>
+
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.3)',
+              padding: '1.5rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem'
+            }}>
+              <h4 style={{ color: 'rgba(255, 255, 255, 0.9)', marginTop: 0, marginBottom: '1rem' }}>
+                Transfer Summary
+              </h4>
+              <div style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                {decryptedWill.estates.map((estate, idx) => (
+                  <div key={idx} style={{
+                    padding: '0.75rem',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '6px',
+                    marginBottom: '0.5rem',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}>
+                    <div style={{ marginBottom: '0.25rem' }}>
+                      <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Beneficiary:</strong> {estate.beneficiary}
+                    </div>
+                    <div style={{ marginBottom: '0.25rem' }}>
+                      <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Token:</strong> {estate.token}
+                    </div>
+                    <div>
+                      <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Amount:</strong> {estate.amount}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={handleReset}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                background: 'var(--primary-color)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Start Over
             </button>
           </div>
         )}

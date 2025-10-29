@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { generateCidUploadProof } from '@utils/api/client';
 import { uploadCid } from '@utils/contract/willFactory';
 import { useWallet } from '@hooks/useWallet';
+import { formatProofForContract } from '@utils/zkp/snarkjs';
 import type { EncryptedData } from '../TestatorPage';
 
 // Convert EncryptedData to TypedJsonObject format for contract
@@ -106,25 +107,17 @@ const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, onSubmitted }) => 
 
     try {
       console.log('Submitting CID to WillFactory:', cid);
-      console.log('Proof structure:', proof);
 
+      const formattedProof = formatProofForContract(proof);
       const willObject = encryptedDataToTypedJsonObject(encryptedData);
-      console.log('Will object keys:', willObject.keys);
-      console.log('Will object values length:', willObject.values.length);
 
-      // Use the proof directly from API (no formatting needed)
-      const receipt = await uploadCid(signer, cid, proof, willObject);
+      const receipt = await uploadCid(signer, cid, formattedProof, willObject);
 
       console.log('CID uploaded successfully:', receipt.hash);
       setIsSubmitted(true);
       setTxHash(receipt.hash);
     } catch (err) {
       console.error('Submission error:', err);
-      console.error('Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        stack: err instanceof Error ? err.stack : 'No stack trace',
-        error: err
-      });
       setError(err instanceof Error ? err.message : 'Submission failed');
     } finally {
       setIsSubmitting(false);

@@ -50,31 +50,25 @@ export const encryptedWillToTypedJsonObject = (
 
     // iv (NUMBER_ARRAY)
     keys.push('iv');
-    const ivArray = encryptedWillData.iv.map(n => n.toString());
-    console.log('IV array length:', ivArray.length, 'Sample:', ivArray.slice(0, 3));
     values.push({
       value: '',
-      numberArray: ivArray,
+      numberArray: encryptedWillData.iv.map(n => n.toString()),
       valueType: 2, // JsonValueType.NUMBER_ARRAY
     });
 
     // authTag (NUMBER_ARRAY)
     keys.push('authTag');
-    const authTagArray = encryptedWillData.authTag.map(n => n.toString());
-    console.log('AuthTag array length:', authTagArray.length, 'Sample:', authTagArray.slice(0, 3));
     values.push({
       value: '',
-      numberArray: authTagArray,
+      numberArray: encryptedWillData.authTag.map(n => n.toString()),
       valueType: 2, // JsonValueType.NUMBER_ARRAY
     });
 
     // ciphertext (NUMBER_ARRAY)
     keys.push('ciphertext');
-    const ciphertextArray = encryptedWillData.ciphertext.map(n => n.toString());
-    console.log('Ciphertext array length:', ciphertextArray.length, 'Sample:', ciphertextArray.slice(0, 3));
     values.push({
       value: '',
-      numberArray: ciphertextArray,
+      numberArray: encryptedWillData.ciphertext.map(n => n.toString()),
       valueType: 2, // JsonValueType.NUMBER_ARRAY
     });
 
