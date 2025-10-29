@@ -139,9 +139,6 @@ export async function generateWillCreationProof(
   return response.json();
 }
 
-// Export for backwards compatibility
-export { generateWillCreationProof as generateWillCreation };
-
 /**
  * Predict Will contract address using CREATE2
  * Automatically generates salt if not provided

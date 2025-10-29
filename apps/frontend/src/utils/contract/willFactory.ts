@@ -22,9 +22,13 @@ export const uploadCid = async (
   signer: JsonRpcSigner,
   cid: string,
   proof: {
-    pi_a: string[];
-    pi_b: string[][];
-    pi_c: string[];
+    proof: {
+      pi_a: [string, string];
+      pi_b: [[string, string], [string, string]];
+      pi_c: [string, string];
+      protocol: string;
+      curve: string;
+    };
     publicSignals: string[];
   },
   will: {
@@ -39,9 +43,9 @@ export const uploadCid = async (
   const contract = getWillFactoryContract(signer);
 
   const tx = await contract.uploadCid(
-    proof.pi_a,
-    proof.pi_b,
-    proof.pi_c,
+    proof.proof.pi_a,
+    proof.proof.pi_b,
+    proof.proof.pi_c,
     proof.publicSignals,
     will,
     cid
@@ -86,33 +90,51 @@ export const createWill = async (
   signer: JsonRpcSigner,
   cid: string,
   proof: {
-    pi_a: string[];
-    pi_b: string[][];
-    pi_c: string[];
+    proof: {
+      pi_a: [string, string];
+      pi_b: [[string, string], [string, string]];
+      pi_c: [string, string];
+      protocol: string;
+      curve: string;
+    };
     publicSignals: string[];
   },
-  willData: {
-    testator: string;
-    executor: string;
-    beneficiaries: string[];
-    tokens: string[];
-    amounts: bigint[];
-    nonce: bigint;
-    deadline: bigint;
-    signature: string;
-  },
-  salt: string
+  encryptedWillTypedJson: {
+    keys: string[];
+    values: Array<{
+      value: string;
+      numberArray: string[];
+      valueType: number;
+    }>;
+  }
 ) => {
   const contract = getWillFactoryContract(signer);
 
+  console.log('=== createWill Contract Call Parameters ===');
+  console.log('pi_a:', proof.proof.pi_a);
+  console.log('pi_b:', proof.proof.pi_b);
+  console.log('pi_c:', proof.proof.pi_c);
+  console.log('publicSignals length:', proof.publicSignals.length);
+  console.log('encryptedWillTypedJson keys:', encryptedWillTypedJson.keys);
+  console.log('encryptedWillTypedJson values length:', encryptedWillTypedJson.values.length);
+  encryptedWillTypedJson.values.forEach((v, idx) => {
+    console.log(`Value ${idx} (${encryptedWillTypedJson.keys[idx]}):`, {
+      valueType: v.valueType,
+      value: v.value ? v.value.slice(0, 50) : '(empty)',
+      numberArrayLength: v.numberArray.length,
+      numberArraySample: v.numberArray.slice(0, 3)
+    });
+  });
+  console.log('cid:', cid);
+  console.log('==========================================');
+
   const tx = await contract.createWill(
-    cid,
-    proof.pi_a,
-    proof.pi_b,
-    proof.pi_c,
+    proof.proof.pi_a,
+    proof.proof.pi_b,
+    proof.proof.pi_c,
     proof.publicSignals,
-    willData,
-    salt
+    encryptedWillTypedJson,
+    cid
   );
 
   const receipt = await tx.wait();

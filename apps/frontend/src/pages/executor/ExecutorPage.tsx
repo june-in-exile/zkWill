@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { ethers } from 'ethers';
 import { useWallet } from '@hooks/useWallet';
 import { downloadFromIPFS } from '@utils/ipfs/helia';
 import { decryptWill as decryptWillAPI, generateWillCreationProof } from '@utils/api/client';
 import { createWill } from '@utils/contract/willFactory';
 import { signatureTransferToBeneficiaries } from '@utils/contract/will';
+import { encryptedWillToTypedJsonObject } from '@utils/transform/encryptedWill';
 import './ExecutorPage.css';
 
 interface Estate {
@@ -179,7 +179,7 @@ const ExecutorPage: React.FC = () => {
   };
 
   const handleExecute = async () => {
-    if (!proof || !decryptedWill || !signer) return;
+    if (!proof || !decryptedWill || !signer || !encryptedWill) return;
 
     setIsLoading(true);
     setError(null);
@@ -191,27 +191,25 @@ const ExecutorPage: React.FC = () => {
       console.log('Will data:', decryptedWill);
       console.log('Proof:', proof);
 
-      // Prepare will data for contract call
-      const willData = {
-        testator: decryptedWill.testator,
-        executor: decryptedWill.executor,
-        beneficiaries: decryptedWill.estates.map((e) => e.beneficiary),
-        tokens: decryptedWill.estates.map((e) => e.token),
-        amounts: decryptedWill.estates.map((e) => BigInt(e.amount)),
-        nonce: BigInt(decryptedWill.permit2.nonce),
-        deadline: BigInt(decryptedWill.permit2.deadline),
-        signature: decryptedWill.permit2.signature,
-      };
+      // Convert encrypted will to TypedJsonObject format for contract
+      const willObject = encryptedWillToTypedJsonObject(encryptedWill);
+      console.log('Will object keys:', willObject.keys);
+      console.log('Will object values length:', willObject.values.length);
 
-      // Format salt as bytes32 hex string
-      const saltBytes32 = ethers.toBeHex(BigInt(decryptedWill.salt), 32);
+      // Debug: Log proof structure
+      console.log('Proof structure:', {
+        pi_a: proof.proof.pi_a,
+        pi_b: proof.proof.pi_b,
+        pi_c: proof.proof.pi_c,
+        publicSignals_length: proof.publicSignals.length,
+        publicSignals_sample: proof.publicSignals.slice(0, 5)
+      });
 
       const createReceipt = await createWill(
         signer,
         cid,
         proof,
-        willData,
-        saltBytes32
+        willObject
       );
 
       console.log('Will contract created!', createReceipt);
@@ -243,6 +241,11 @@ const ExecutorPage: React.FC = () => {
       setStatus('');
     } catch (err) {
       console.error('Execution failed:', err);
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : 'No stack trace',
+        error: err
+      });
       setError(err instanceof Error ? err.message : 'Execution failed');
     } finally {
       setIsLoading(false);
@@ -268,10 +271,22 @@ const ExecutorPage: React.FC = () => {
       </div>
 
       <div className="steps-indicator">
-        <div className={`step ${currentStep >= 1 ? 'active' : ''}`}>1. Download</div>
-        <div className={`step ${currentStep >= 2 ? 'active' : ''}`}>2. Decrypt</div>
-        <div className={`step ${currentStep >= 3 ? 'active' : ''}`}>3. Generate Proof</div>
-        <div className={`step ${currentStep >= 4 ? 'active' : ''}`}>4. Execute</div>
+        <div className={`step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
+          <div className="step-number">1</div>
+          <div className="step-label">Download</div>
+        </div>
+        <div className={`step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
+          <div className="step-number">2</div>
+          <div className="step-label">Decrypt</div>
+        </div>
+        <div className={`step ${currentStep >= 3 ? 'active' : ''} ${currentStep > 3 ? 'completed' : ''}`}>
+          <div className="step-number">3</div>
+          <div className="step-label">Generate Proof</div>
+        </div>
+        <div className={`step ${currentStep >= 4 ? 'active' : ''} ${currentStep > 4 ? 'completed' : ''}`}>
+          <div className="step-number">4</div>
+          <div className="step-label">Execute</div>
+        </div>
       </div>
 
       <div className="card">
@@ -416,7 +431,7 @@ const ExecutorPage: React.FC = () => {
                 <div><strong>Testator:</strong> {decryptedWill.testator}</div>
                 <div><strong>Executor:</strong> {decryptedWill.executor}</div>
                 <div><strong>Will Address:</strong> {decryptedWill.will}</div>
-                <div><strong>Salt:</strong> {BigInt(decryptedWill.salt).toString(16).slice(0, 16)}...</div>
+                <div><strong>Salt:</strong> {BigInt(decryptedWill.salt)}</div>
                 <div><strong>Estates:</strong></div>
                 <ul>
                   {decryptedWill.estates.map((estate, idx) => (
@@ -428,9 +443,9 @@ const ExecutorPage: React.FC = () => {
                   ))}
                 </ul>
                 <div><strong>Permit2 Data:</strong></div>
-                <div>- Nonce: {BigInt(decryptedWill.permit2.nonce).toString(16).slice(0, 16)}...</div>
-                <div>- Deadline: {new Date(decryptedWill.permit2.deadline * 1000).toLocaleString()}</div>
-                <div>- Signature: {decryptedWill.permit2.signature.slice(0, 20)}...</div>
+                <div>- Nonce: {BigInt(decryptedWill.permit2.nonce)}</div>
+                <div>- Deadline: {new Date(decryptedWill.permit2.deadline * 1000).toLocaleString('en-US')}</div>
+                <div>- Signature: {decryptedWill.permit2.signature.slice(0, 40)}......{decryptedWill.permit2.signature.slice(-25)} ({decryptedWill.permit2.signature.length} bytes)</div>
               </div>
             </div>
 
