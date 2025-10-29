@@ -19,24 +19,6 @@ export const NETWORK_CONFIG = {
   BLOCK_EXPLORER: import.meta.env.VITE_BLOCK_EXPLORER || 'https://sepolia.arbiscan.io',
 } as const;
 
-// Validate that all required addresses are set
-export const validateContractAddresses = () => {
-  const missing: string[] = [];
-
-  Object.entries(CONTRACT_ADDRESSES).forEach(([key, value]) => {
-    if (!value || value === 'YOUR_DEPLOYED_FACTORY_ADDRESS') {
-      missing.push(key);
-    }
-  });
-
-  if (missing.length > 0) {
-    console.warn('Missing contract addresses:', missing);
-    console.warn('Please update your .env file with deployed contract addresses');
-  }
-
-  return missing.length === 0;
-};
-
 // Helper to get contract address by name
 export const getContractAddress = (contractName: keyof typeof CONTRACT_ADDRESSES): string => {
   const address = CONTRACT_ADDRESSES[contractName];

@@ -16,6 +16,7 @@ const OraclePage: React.FC = () => {
   const [isProbating, setIsProbating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
   const [oracleAddress, setOracleAddress] = useState<string | null>(null);
   const [isCheckingOracle, setIsCheckingOracle] = useState(false);
 
@@ -61,6 +62,7 @@ const OraclePage: React.FC = () => {
     setIsProbating(true);
     setError(null);
     setSuccess(null);
+    setTxHash(null);
 
     try {
       console.log('Probating CID:', cid);
@@ -69,6 +71,7 @@ const OraclePage: React.FC = () => {
 
       console.log('CID probated successfully:', receipt.hash);
       setSuccess(`Successfully probated CID: ${cid}`);
+      setTxHash(receipt.hash);
       setCidInput('');
     } catch (err) {
       console.error('Probation error:', err);
@@ -163,7 +166,27 @@ const OraclePage: React.FC = () => {
         </form>
 
         {error && <div className="error">{error}</div>}
-        {success && <div className="success">{success}</div>}
+        {success && (
+          <div className="success">
+            <div>{success}</div>
+            {txHash && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <strong>Transaction Hash:</strong>
+                <code style={{
+                  display: 'block',
+                  wordBreak: 'break-all',
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  marginTop: '0.25rem',
+                  fontSize: '0.9rem'
+                }}>
+                  {txHash}
+                </code>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -185,7 +208,7 @@ const OraclePage: React.FC = () => {
                   </div>
                   <div className="info-row">
                     <span className="label">Notarized:</span>
-                    <span>{new Date(will.notarizedTimestamp).toLocaleString()}</span>
+                    <span>{new Date(will.notarizedTimestamp).toLocaleString('en-US')}</span>
                   </div>
                 </div>
                 {!will.isProbated && (

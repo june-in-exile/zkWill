@@ -221,7 +221,7 @@ const ExecutorPage: React.FC = () => {
         formattedProof,
         willObject
       );
-
+  
       console.log('Will contract created!', createReceipt);
       const willAddress = decryptedWill.will; // This is the predicted Will address
 
@@ -395,21 +395,53 @@ const ExecutorPage: React.FC = () => {
                   Or upload key from file:
                 </label>
                 <input
+                  id="key-file-input"
                   type="file"
                   accept=".txt"
                   onChange={handleKeyFileUpload}
                   disabled={isLoading}
                   style={{
-                    display: 'block',
-                    padding: '0.5rem',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '4px',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    cursor: 'pointer',
-                    width: '100%'
+                    display: 'none'
                   }}
                 />
+                <label
+                  htmlFor="key-file-input"
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.75rem 1.5rem',
+                    background: 'rgba(33, 150, 243, 0.2)',
+                    border: '1px solid rgba(33, 150, 243, 0.5)',
+                    borderRadius: '6px',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    transition: 'all 0.2s',
+                    opacity: isLoading ? 0.5 : 1,
+                    textAlign: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.background = 'rgba(33, 150, 243, 0.3)';
+                      e.currentTarget.style.borderColor = 'rgba(33, 150, 243, 0.7)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(33, 150, 243, 0.2)';
+                    e.currentTarget.style.borderColor = 'rgba(33, 150, 243, 0.5)';
+                  }}
+                >
+                  Choose Key File
+                </label>
+                {keyInput && (
+                  <span style={{
+                    marginLeft: '1rem',
+                    color: 'var(--success-color)',
+                    fontSize: '0.9rem'
+                  }}>
+                    ✓ Key loaded
+                  </span>
+                )}
                 <p style={{
                   margin: '0.5rem 0 0 0',
                   fontSize: '0.8rem',

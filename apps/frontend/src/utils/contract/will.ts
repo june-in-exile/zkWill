@@ -7,9 +7,9 @@ import type { JsonRpcSigner } from 'ethers';
 import WillABI from '@/config/abi/Will.json';
 
 /**
- * Get Will contract instance
+ * Get Will contract instance (internal use only)
  */
-export const getWillContract = (willAddress: string, signer: JsonRpcSigner) => {
+const getWillContract = (willAddress: string, signer: JsonRpcSigner) => {
   return new Contract(willAddress, WillABI, signer);
 };
 
@@ -37,24 +37,4 @@ export const signatureTransferToBeneficiaries = async (
   );
   const receipt = await tx.wait();
   return receipt;
-};
-
-/**
- * Get will details
- */
-export const getWillDetails = async (
-  willAddress: string,
-  signer: JsonRpcSigner
-) => {
-  const contract = getWillContract(willAddress, signer);
-
-  const testator = await contract.testator();
-  const executor = await contract.executor();
-  const cid = await contract.cid();
-
-  return {
-    testator,
-    executor,
-    cid,
-  };
 };

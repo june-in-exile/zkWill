@@ -119,27 +119,6 @@ export const approvePermit2 = async (
 };
 
 /**
- * Batch approve multiple tokens for Permit2
- */
-export const batchApprovePermit2 = async (
-  tokenAddresses: string[],
-  signer: ethers.JsonRpcSigner,
-  onProgress?: (current: number, total: number, tokenAddress: string) => void
-): Promise<ethers.TransactionReceipt[]> => {
-  const receipts: ethers.TransactionReceipt[] = [];
-
-  for (let i = 0; i < tokenAddresses.length; i++) {
-    const tokenAddress = tokenAddresses[i];
-    onProgress?.(i + 1, tokenAddresses.length, tokenAddress);
-
-    const receipt = await approvePermit2(tokenAddress, signer);
-    receipts.push(receipt);
-  }
-
-  return receipts;
-};
-
-/**
  * Check approval status for multiple tokens
  */
 export const batchCheckApprovals = async (

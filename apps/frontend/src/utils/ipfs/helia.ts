@@ -28,7 +28,7 @@ let jsonHandler: HeliaJSON | null = null;
  *
  * For persistence across sessions, use HTTP gateways for downloads.
  */
-export const getHeliaInstance = async (): Promise<{ helia: Helia; json: HeliaJSON }> => {
+const getHeliaInstance = async (): Promise<{ helia: Helia; json: HeliaJSON }> => {
   if (heliaInstance && jsonHandler) {
     console.log('[Helia] Reusing existing instance');
     return { helia: heliaInstance, json: jsonHandler };
@@ -210,27 +210,4 @@ export const downloadFromIPFS = async <T>(cidString: string): Promise<T> => {
       `Please ensure the content is pinned and available on the IPFS network.`
     );
   }
-};
-
-/**
- * Stop Helia instance
- */
-export const stopHelia = async (): Promise<void> => {
-  if (heliaInstance) {
-    await heliaInstance.stop();
-    heliaInstance = null;
-    jsonHandler = null;
-  }
-};
-
-/**
- * Get IPFS gateway URLs for a CID
- */
-export const getGatewayUrls = (cid: string): string[] => {
-  return [
-    `http://localhost:8080/ipfs/${cid}`,
-    `https://ipfs.io/ipfs/${cid}`,
-    `https://gateway.ipfs.io/ipfs/${cid}`,
-    `https://cloudflare-ipfs.com/ipfs/${cid}`,
-  ];
 };

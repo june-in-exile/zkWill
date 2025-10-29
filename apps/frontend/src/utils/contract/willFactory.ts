@@ -114,36 +114,3 @@ export const createWill = async (
   const receipt = await tx.wait();
   return receipt;
 };
-
-/**
- * Get CID details
- */
-export const getCidDetails = async (
-  signer: JsonRpcSigner,
-  cid: string
-) => {
-  const contract = getWillFactoryContract(signer);
-  return await contract.cidDetails(cid);
-};
-
-/**
- * Check if CID is notarized
- */
-export const isCidNotarized = async (
-  signer: JsonRpcSigner,
-  cid: string
-): Promise<boolean> => {
-  const details = await getCidDetails(signer, cid);
-  return details.isNotarized;
-};
-
-/**
- * Check if CID is probated
- */
-export const isCidProbated = async (
-  signer: JsonRpcSigner,
-  cid: string
-): Promise<boolean> => {
-  const details = await getCidDetails(signer, cid);
-  return details.isProbated;
-};

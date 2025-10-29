@@ -36,4 +36,4 @@ const generateWillPermit2Signature = async (
   }
 };
 
-export { createPermitStructure, generateWillPermit2Signature }
+export { generateWillPermit2Signature };

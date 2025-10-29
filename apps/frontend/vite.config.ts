@@ -77,4 +77,7 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  optimizeDeps: {
+    include: ['@uniswap/permit2-sdk'],
+  },
 });

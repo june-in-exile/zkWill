@@ -16,6 +16,7 @@ const NotaryPage: React.FC = () => {
   const [isNotarizing, setIsNotarizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
   const [notaryAddress, setNotaryAddress] = useState<string | null>(null);
   const [isCheckingNotary, setIsCheckingNotary] = useState(false);
 
@@ -61,6 +62,7 @@ const NotaryPage: React.FC = () => {
     setIsNotarizing(true);
     setError(null);
     setSuccess(null);
+    setTxHash(null);
 
     try {
       console.log('Notarizing CID:', cid);
@@ -69,6 +71,7 @@ const NotaryPage: React.FC = () => {
 
       console.log('CID notarized successfully:', receipt.hash);
       setSuccess(`Successfully notarized CID: ${cid}`);
+      setTxHash(receipt.hash);
       setCidInput('');
     } catch (err) {
       console.error('Notarization error:', err);
@@ -154,7 +157,27 @@ const NotaryPage: React.FC = () => {
         </form>
 
         {error && <div className="error">{error}</div>}
-        {success && <div className="success">{success}</div>}
+        {success && (
+          <div className="success">
+            <div>{success}</div>
+            {txHash && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <strong>Transaction Hash:</strong>
+                <code style={{
+                  display: 'block',
+                  wordBreak: 'break-all',
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  marginTop: '0.25rem',
+                  fontSize: '0.9rem'
+                }}>
+                  {txHash}
+                </code>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -176,7 +199,7 @@ const NotaryPage: React.FC = () => {
                   </div>
                   <div className="info-row">
                     <span className="label">Uploaded:</span>
-                    <span>{new Date(will.uploadTimestamp).toLocaleString()}</span>
+                    <span>{new Date(will.uploadTimestamp).toLocaleString('en-US')}</span>
                   </div>
                 </div>
                 {!will.isNotarized && (

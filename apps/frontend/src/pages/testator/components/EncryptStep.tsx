@@ -296,7 +296,7 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
             </div>
             <div className="preview-row">
               <span className="label">Permit2 Deadline:</span>
-              <code>{new Date(signedWillData.permit2.deadline * 1000).toLocaleString()}</code>
+              <code>{new Date(signedWillData.permit2.deadline * 1000).toLocaleString('en-US')}</code>
             </div>
             <div className="preview-row">
               <span className="label">Signature:</span>

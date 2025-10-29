@@ -179,7 +179,7 @@ const UploadIPFSStep: React.FC<Props> = ({ encryptedData, onUploaded }) => {
             borderRadius: '3px',
             wordBreak: 'break-all'
           }}>
-            {encryptedData.encrypted.timestamp} ({new Date(encryptedData.encrypted.timestamp * 1000).toLocaleString()})
+            {encryptedData.encrypted.timestamp} ({new Date(encryptedData.encrypted.timestamp * 1000).toLocaleString('en-US')})
           </div>
         </div>
       </div>
