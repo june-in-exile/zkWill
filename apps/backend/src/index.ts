@@ -16,6 +16,7 @@ import { JsonRpcProvider } from 'ethers';
 import { validateNetwork } from '@shared/utils/validation/index.js';
 import { executePredictWill } from './onchain/willFactory/predictWill.js';
 import { verifyTestatorSignature } from './offchain/signature/verifyPermit2.js';
+import { deserializeWill } from './offchain/serialization/deserialize.js';
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 3001;
@@ -162,7 +163,7 @@ app.post('/api/crypto/encrypt', async (req: Request, res: Response) => {
     console.log(`✅ Will encrypted successfully\n`);
     res.json(encryptedWill);
   } catch (error) {
-    console.error('❌ Encryption failed:', error);
+    console.error('❌ Serialization/Encryption failed:', error);
     res.status(500).json({
       error: 'Encryption failed',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -192,13 +193,31 @@ app.post('/api/crypto/decrypt', async (req: Request, res: Response) => {
       ivBuffer
     );
 
-    console.log(`✅ Will decrypted successfully\n`);
-    res.json({
-      plaintext: Array.from(plaintext),
-      hex: plaintext.toString('hex')
-    });
+    const hex = plaintext.toString('hex');
+    console.log(`✅ Will decrypted successfully`);
+
+    // Deserialize the decrypted hex
+    console.log(`📜 Deserializing will data...`);
+    const deserializedWill = deserializeWill({ hex });
+    console.log(`✅ Will deserialized successfully\n`);
+
+    // Convert BigInt to string for JSON serialization
+    const result = {
+      ...deserializedWill,
+      salt: deserializedWill.salt.toString(),
+      estates: deserializedWill.estates.map(estate => ({
+        ...estate,
+        amount: estate.amount.toString(),
+      })),
+      permit2: {
+        ...deserializedWill.permit2,
+        nonce: deserializedWill.permit2.nonce.toString(),
+      },
+    };
+
+    res.json(result);
   } catch (error) {
-    console.error('❌ Decryption failed:', error);
+    console.error('❌ Decryption/Deserialization failed:', error);
     res.status(500).json({
       error: 'Decryption failed',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -210,30 +229,26 @@ app.post('/api/crypto/decrypt', async (req: Request, res: Response) => {
 // Utility Routes
 // ============================================================================
 
-app.get('/api/utils/generate-salt', (_req: Request, res: Response) => {
-  try {
-    const salt = generateSalt();
-    res.json({ salt: salt.toString() });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Salt generation failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
 app.post('/api/utils/predict-will', async (req: Request, res: Response) => {
   console.log('\n📥 Received predict-will request');
   console.log('📥 Raw request body:', JSON.stringify(req.body, null, 2));
 
   try {
-    const { testator, executor, estates, salt } = req.body;
+    const { testator, executor, estates } = req.body;
+    let { salt } = req.body;
 
-    if (!testator || !executor || !estates || !salt) {
+    if (!testator || !executor || !estates) {
       console.error('❌ Missing required fields');
-      console.error('Received:', { testator: !!testator, executor: !!executor, estates: !!estates, salt: !!salt });
-      res.status(400).json({ error: 'Missing required fields: testator, executor, estates, salt' });
+      console.error('Received:', { testator: !!testator, executor: !!executor, estates: !!estates });
+      res.status(400).json({ error: 'Missing required fields: testator, executor, estates' });
       return;
+    }
+
+    // Generate salt if not provided
+    if (!salt) {
+      console.log('🎲 Generating new salt...');
+      salt = generateSalt().toString();
+      console.log('✅ Salt generated:', salt);
     }
 
     console.log('\n🔮 Predicting Will address...');
@@ -267,7 +282,7 @@ app.post('/api/utils/predict-will', async (req: Request, res: Response) => {
     });
 
     console.log('✅ Predicted address:', predictedAddress);
-    res.json({ willAddress: predictedAddress });
+    res.json({ willAddress: predictedAddress, salt });
   } catch (error) {
     console.error('❌ Predict will failed:', error);
     res.status(500).json({
@@ -280,9 +295,14 @@ app.post('/api/utils/predict-will', async (req: Request, res: Response) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`\n🚀 Backend server running on http://localhost:${PORT}`);
-  console.log(`🔐 Crypto endpoints: http://localhost:${PORT}/api/crypto/*`);
-  console.log(`🔐 ZKP endpoints: http://localhost:${PORT}/api/zkp/*`);
-  console.log(`🛠️  Utility endpoints: http://localhost:${PORT}/api/utils/*\n`);
+  console.log(`🔐 Crypto endpoints:`);
+  console.log(`   - POST http://localhost:${PORT}/api/crypto/encrypt`);
+  console.log(`   - POST http://localhost:${PORT}/api/crypto/decrypt`);
+  console.log(`🔐 ZKP endpoints:`);
+  console.log(`   - POST http://localhost:${PORT}/api/zkp/cidUpload`);
+  console.log(`   - POST http://localhost:${PORT}/api/zkp/willCreation`);
+  console.log(`🛠️  Utility endpoints:`);
+  console.log(`   - POST http://localhost:${PORT}/api/utils/predict-will\n`);
 });
 
 export default app;

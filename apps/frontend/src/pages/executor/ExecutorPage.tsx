@@ -30,73 +30,6 @@ interface DecryptedWill extends SignedWill {
   // SignedWill already contains all needed fields
 }
 
-// Helper to deserialize hex to SignedWill
-function deserializeWill(hex: string): SignedWill {
-  // This is a simplified version - backend should handle this
-  // For now, we'll parse the hex string
-  // In production, backend API should return the deserialized object directly
-
-  let offset = 0;
-  const FIELD_HEX_LENGTH = {
-    ADDRESS: 40,
-    AMOUNT: 64,
-    SALT: 64,
-    NONCE: 32,
-    DEADLINE: 16,
-    SIGNATURE: 130,
-  };
-
-  const testator = '0x' + hex.slice(offset, offset + FIELD_HEX_LENGTH.ADDRESS);
-  offset += FIELD_HEX_LENGTH.ADDRESS;
-
-  const executor = '0x' + hex.slice(offset, offset + FIELD_HEX_LENGTH.ADDRESS);
-  offset += FIELD_HEX_LENGTH.ADDRESS;
-
-  // Parse estates (assuming 2 for now - should be dynamic)
-  const estates: Estate[] = [];
-  const numEstates = 2; // TODO: Get from contract or metadata
-
-  for (let i = 0; i < numEstates; i++) {
-    const beneficiary = '0x' + hex.slice(offset, offset + FIELD_HEX_LENGTH.ADDRESS);
-    offset += FIELD_HEX_LENGTH.ADDRESS;
-
-    const token = '0x' + hex.slice(offset, offset + FIELD_HEX_LENGTH.ADDRESS);
-    offset += FIELD_HEX_LENGTH.ADDRESS;
-
-    const amount = BigInt('0x' + hex.slice(offset, offset + FIELD_HEX_LENGTH.AMOUNT)).toString();
-    offset += FIELD_HEX_LENGTH.AMOUNT;
-
-    estates.push({ beneficiary, token, amount });
-  }
-
-  const salt = BigInt('0x' + hex.slice(offset, offset + FIELD_HEX_LENGTH.SALT)).toString();
-  offset += FIELD_HEX_LENGTH.SALT;
-
-  const will = '0x' + hex.slice(offset, offset + FIELD_HEX_LENGTH.ADDRESS);
-  offset += FIELD_HEX_LENGTH.ADDRESS;
-
-  const nonce = BigInt('0x' + hex.slice(offset, offset + FIELD_HEX_LENGTH.NONCE)).toString();
-  offset += FIELD_HEX_LENGTH.NONCE;
-
-  const deadline = parseInt(hex.slice(offset, offset + FIELD_HEX_LENGTH.DEADLINE), 16);
-  offset += FIELD_HEX_LENGTH.DEADLINE;
-
-  const signature = '0x' + hex.slice(offset, offset + FIELD_HEX_LENGTH.SIGNATURE);
-
-  return {
-    testator,
-    executor,
-    estates,
-    salt,
-    will,
-    permit2: {
-      nonce,
-      deadline,
-      signature,
-    },
-  };
-}
-
 const ExecutorPage: React.FC = () => {
   const { isConnected, signer } = useWallet();
   const [currentStep, setCurrentStep] = useState(1);
@@ -117,17 +50,67 @@ const ExecutorPage: React.FC = () => {
       return;
     }
 
+    console.log('=== [ExecutorPage] Starting download ===');
+    console.log('[ExecutorPage] CID:', cid);
+
     setIsLoading(true);
     setError(null);
+    setStatus('Downloading from IPFS... This may take a moment.');
 
     try {
+      console.log('[ExecutorPage] Calling downloadFromIPFS...');
       const downloaded = await downloadFromIPFS(cid);
+      console.log('[ExecutorPage] Download successful!');
+      console.log('[ExecutorPage] Downloaded data:', downloaded);
+
       setEncryptedWill(downloaded);
+      setStatus('Download complete!');
       setCurrentStep(2);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Download failed');
+      console.error('[ExecutorPage] Download failed:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Download failed';
+      setError(errorMessage);
+
+      // Provide helpful guidance based on the error
+      if (errorMessage.includes('Failed to download from IPFS after trying all methods')) {
+        setError(
+          'Failed to download the will from IPFS. Possible reasons:\n' +
+          '1. The CID has not been uploaded to IPFS yet\n' +
+          '2. The content is not pinned or available on the network\n' +
+          '3. The CID format may be invalid\n\n' +
+          'Please verify the CID and ensure the content is available.'
+        );
+      }
     } finally {
       setIsLoading(false);
+      setStatus('');
+      console.log('[ExecutorPage] Download process complete');
+    }
+  };
+
+  const handleKeyFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      console.log('[ExecutorPage] Reading key file:', file.name);
+      const text = await file.text();
+
+      // Extract hex key from file content (remove whitespace, newlines, etc.)
+      const cleanedKey = text.replace(/\s+/g, '').trim();
+
+      // Validate hex format
+      if (!/^[0-9a-fA-F]+$/.test(cleanedKey)) {
+        setError('Invalid key format. File should contain a hexadecimal key.');
+        return;
+      }
+
+      console.log('[ExecutorPage] Key loaded from file, length:', cleanedKey.length);
+      setKeyInput(cleanedKey);
+      setError(null);
+    } catch (err) {
+      console.error('[ExecutorPage] Failed to read key file:', err);
+      setError('Failed to read key file');
     }
   };
 
@@ -145,22 +128,21 @@ const ExecutorPage: React.FC = () => {
       // Convert hex key to number array for backend API
       const keyBytes = keyInput.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16));
 
-      // Decrypt via backend API
-      const decryptedResult = await decryptWillAPI(
+      console.log('[ExecutorPage] Decrypting and deserializing will...');
+      // Decrypt via backend API (also deserializes automatically)
+      const willData = await decryptWillAPI(
         encryptedWill.ciphertext,
         keyBytes,
         encryptedWill.iv,
         encryptedWill.algorithm
       );
 
-      // Deserialize the hex string back to SignedWill structure
-      const willData = deserializeWill(decryptedResult.hex);
-
-      console.log('Decrypted and deserialized will:', willData);
+      console.log('[ExecutorPage] Decryption and deserialization successful:', willData);
 
       setDecryptedWill(willData);
       setCurrentStep(3);
     } catch (err) {
+      console.error('[ExecutorPage] Decryption/deserialization failed:', err);
       setError(err instanceof Error ? err.message : 'Decryption failed');
     } finally {
       setIsLoading(false);
@@ -311,6 +293,55 @@ const ExecutorPage: React.FC = () => {
                 {isLoading ? 'Downloading...' : 'Download Will'}
               </button>
             </form>
+            {status && <div className="status-info"><p>{status}</p></div>}
+
+            {/* Debug helper */}
+            <div style={{
+              marginTop: '1rem',
+              padding: '1rem',
+              background: 'rgba(33, 150, 243, 0.1)',
+              border: '1px solid rgba(33, 150, 243, 0.3)',
+              borderRadius: '6px',
+              fontSize: '0.85rem'
+            }}>
+              <p style={{ margin: 0, marginBottom: '0.5rem', color: 'rgba(255, 255, 255, 0.9)' }}>
+                🔍 <strong>Debug Helper:</strong>
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  console.log('=== localStorage Cache Check ===');
+                  const keys = Object.keys(localStorage);
+                  const ipfsKeys = keys.filter(k => k.startsWith('ipfs_cache_'));
+                  console.log('Total IPFS cache entries:', ipfsKeys.length);
+                  ipfsKeys.forEach(key => {
+                    const cid = key.replace('ipfs_cache_', '');
+                    const data = localStorage.getItem(key);
+                    console.log('CID:', cid);
+                    console.log('Data size:', data?.length, 'characters');
+                    console.log('Data preview:', data?.slice(0, 100) + '...');
+                  });
+                  if (ipfsKeys.length === 0) {
+                    console.log('⚠️ No cached data found in localStorage');
+                  }
+                  alert(`Found ${ipfsKeys.length} cached IPFS items. Check console for details.`);
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: 'rgba(33, 150, 243, 0.2)',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  border: '1px solid rgba(33, 150, 243, 0.5)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem'
+                }}
+              >
+                Check localStorage Cache
+              </button>
+              <p style={{ margin: 0, marginTop: '0.5rem', color: 'rgba(255, 255, 255, 0.7)' }}>
+                This will show all cached IPFS data in your browser console.
+              </p>
+            </div>
           </div>
         )}
 
@@ -328,7 +359,48 @@ const ExecutorPage: React.FC = () => {
                   disabled={isLoading}
                 />
               </div>
-              <button type="submit" disabled={isLoading}>
+
+              <div style={{
+                margin: '1rem 0',
+                padding: '1rem',
+                background: 'rgba(33, 150, 243, 0.1)',
+                border: '1px solid rgba(33, 150, 243, 0.3)',
+                borderRadius: '6px'
+              }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontSize: '0.9rem'
+                }}>
+                  Or upload key from file:
+                </label>
+                <input
+                  type="file"
+                  accept=".txt"
+                  onChange={handleKeyFileUpload}
+                  disabled={isLoading}
+                  style={{
+                    display: 'block',
+                    padding: '0.5rem',
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '4px',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    cursor: 'pointer',
+                    width: '100%'
+                  }}
+                />
+                <p style={{
+                  margin: '0.5rem 0 0 0',
+                  fontSize: '0.8rem',
+                  color: 'rgba(255, 255, 255, 0.6)'
+                }}>
+                  Upload a .txt file containing the hexadecimal decryption key
+                </p>
+              </div>
+
+              <button type="submit" disabled={isLoading || !keyInput.trim()}>
                 {isLoading ? 'Decrypting...' : 'Decrypt Will'}
               </button>
             </form>

@@ -65,14 +65,14 @@ export async function encryptWill(signedWill: SignedWill): Promise<EncryptedWill
 }
 
 /**
- * Decrypt will data using backend
+ * Decrypt will data using backend (also deserializes automatically)
  */
 export async function decryptWill(
   ciphertext: number[],
   key: number[],
   iv: number[],
   algorithm?: string
-): Promise<{ plaintext: number[]; hex: string }> {
+): Promise<SignedWill> {
   const response = await fetch(`${API_BASE_URL}/api/crypto/decrypt`, {
     method: 'POST',
     headers: {
@@ -143,22 +143,8 @@ export async function generateWillCreationProof(
 export { generateWillCreationProof as generateWillCreation };
 
 /**
- * Generate a random salt
- */
-export async function generateSalt(): Promise<string> {
-  const response = await fetch(`${API_BASE_URL}/api/utils/generate-salt`);
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Salt generation failed');
-  }
-
-  const data = await response.json();
-  return data.salt;
-}
-
-/**
  * Predict Will contract address using CREATE2
+ * Automatically generates salt if not provided
  */
 export async function predictWillAddress(
   testator: string,
@@ -168,8 +154,8 @@ export async function predictWillAddress(
     token: string;
     amount: string;
   }>,
-  salt: string
-): Promise<string> {
+  salt?: string
+): Promise<{ willAddress: string; salt: string }> {
   const response = await fetch(`${API_BASE_URL}/api/utils/predict-will`, {
     method: 'POST',
     headers: {
@@ -184,7 +170,7 @@ export async function predictWillAddress(
   }
 
   const data = await response.json();
-  return data.willAddress;
+  return { willAddress: data.willAddress, salt: data.salt };
 }
 
 /**

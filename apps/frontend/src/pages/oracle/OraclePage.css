@@ -81,6 +81,7 @@
 
 .info-row code {
   background-color: #1a1a1a;
+  color: rgba(255, 255, 255, 0.95);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.875rem;
@@ -115,19 +116,25 @@
 
 /* Account verification styles */
 .account-warning-card {
-  background-color: #3d2200;
-  border-left: 4px solid #ffa500;
+  background-color: rgba(255, 152, 0, 0.1);
+  border: 1px solid var(--warning-color);
+  border-left: 4px solid var(--warning-color);
   margin-bottom: 1.5rem;
 }
 
 .account-warning-card h3 {
-  color: #ffa500;
+  color: var(--warning-color);
   margin-top: 0;
   margin-bottom: 1rem;
 }
 
+.account-warning-card p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .success-card {
-  background-color: #002d1a;
+  background-color: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
   border-left: 4px solid var(--success-color);
   padding: 1rem;
   text-align: center;
@@ -138,6 +145,7 @@
   color: var(--success-color);
   margin: 0;
   font-weight: 600;
+  font-size: 1.05rem;
 }
 
 .account-details {
@@ -158,11 +166,13 @@
 
 .account-details code {
   background-color: #1a1a1a;
+  color: rgba(255, 255, 255, 0.95);
   padding: 0.5rem;
   border-radius: 4px;
   display: block;
   font-size: 0.875rem;
   word-break: break-all;
+  border: 1px solid var(--border-color);
 }
 
 .help-text {

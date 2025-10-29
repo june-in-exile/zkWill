@@ -69,6 +69,65 @@
   line-height: 1.5;
 }
 
+.will-info {
+  color: var(--text-color);
+}
+
+.will-info strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.will-info ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.will-info li {
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.execution-summary {
+  background-color: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.execution-summary h3 {
+  color: var(--success-color);
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.execution-summary div {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.execution-summary strong {
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.status-info {
+  background-color: rgba(33, 150, 243, 0.1);
+  border: 1px solid rgba(33, 150, 243, 0.3);
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.status-info p {
+  color: var(--info-color);
+  margin: 0;
+  font-weight: 500;
+}
+
 .progress-info {
   margin: 1.5rem 0;
 }

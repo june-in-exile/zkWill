@@ -159,7 +159,73 @@ const TestatorPage: React.FC = () => {
               <UploadIPFSStep encryptedData={encryptedData} onUploaded={handleUploaded} />
             ) : (
               <div className="step-completed-summary">
-                <p>✓ Uploaded to IPFS (CID: {cid?.slice(0, 20)}...)</p>
+                <p>✓ Uploaded to IPFS</p>
+                <div style={{
+                  background: '#e8f5e9',
+                  padding: '15px',
+                  marginTop: '10px',
+                  borderRadius: '5px',
+                  fontFamily: 'monospace',
+                  color: '#1b5e20'
+                }}>
+                  <div style={{ marginBottom: '10px' }}>
+                    <strong style={{ color: '#2e7d32' }}>CID:</strong>
+                    <div style={{
+                      background: 'white',
+                      padding: '8px',
+                      marginTop: '5px',
+                      borderRadius: '3px',
+                      wordBreak: 'break-all',
+                      cursor: 'pointer',
+                      color: '#000',
+                      border: '1px solid #c8e6c9'
+                    }}
+                    onClick={() => {
+                      if (cid) {
+                        navigator.clipboard.writeText(cid);
+                        alert('CID copied to clipboard!');
+                      }
+                    }}
+                    title="Click to copy">
+                      {cid}
+                    </div>
+                  </div>
+                  <div>
+                    <strong style={{ color: '#2e7d32' }}>Decryption Key (hex):</strong>
+                    <div style={{
+                      background: 'white',
+                      padding: '8px',
+                      marginTop: '5px',
+                      borderRadius: '3px',
+                      wordBreak: 'break-all',
+                      cursor: 'pointer',
+                      color: '#000',
+                      border: '1px solid #c8e6c9'
+                    }}
+                    onClick={() => {
+                      if (encryptedData) {
+                        const keyHex = Array.from(encryptedData.key)
+                          .map(b => b.toString(16).padStart(2, '0'))
+                          .join('');
+                        navigator.clipboard.writeText(keyHex);
+                        alert('Key copied to clipboard!');
+                      }
+                    }}
+                    title="Click to copy">
+                      {Array.from(encryptedData.key)
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join('')}
+                    </div>
+                  </div>
+                  <p style={{
+                    marginTop: '10px',
+                    marginBottom: 0,
+                    fontSize: '12px',
+                    color: '#388e3c'
+                  }}>
+                    💡 Click on CID or Key to copy to clipboard. You can use these in the Executor page to test download.
+                  </p>
+                </div>
               </div>
             )}
           </div>

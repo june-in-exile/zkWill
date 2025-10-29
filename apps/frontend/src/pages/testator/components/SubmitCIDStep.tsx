@@ -71,6 +71,9 @@ const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, onSubmitted }) => 
   const [status, setStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [proof, setProof] = useState<any>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleGenerateProof = async () => {
     setIsGenerating(true);
@@ -111,13 +114,24 @@ const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, onSubmitted }) => 
       const receipt = await uploadCid(signer, cid, formattedProof, willObject);
 
       console.log('CID uploaded successfully:', receipt.hash);
-      onSubmitted();
+      setIsSubmitted(true);
+      setTxHash(receipt.hash);
     } catch (err) {
       console.error('Submission error:', err);
       setError(err instanceof Error ? err.message : 'Submission failed');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCopyCID = () => {
+    navigator.clipboard.writeText(cid);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleComplete = () => {
+    onSubmitted();
   };
 
   return (
@@ -129,39 +143,188 @@ const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, onSubmitted }) => 
         <code>{cid}</code>
       </div>
 
-      {!proof ? (
+      {!isSubmitted ? (
         <>
-          <p>Generate a zero-knowledge proof to verify your encrypted will.</p>
-          <div className="info-box">
-            <p>⚠️ This may take minutes depending on your device.</p>
-            <p>The page may become unresponsive during proof generation.</p>
-          </div>
-
-          {isGenerating && (
-            <div className="progress-info">
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+          {!proof ? (
+            <>
+              <p>Generate a zero-knowledge proof to verify your encrypted will.</p>
+              <div className="info-box">
+                <p>⚠️ This may take minutes depending on your device.</p>
+                <p>The page may become unresponsive during proof generation.</p>
               </div>
-              <p>{status}</p>
-            </div>
+
+              {isGenerating && (
+                <div className="progress-info">
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+                  </div>
+                  <p>{status}</p>
+                </div>
+              )}
+
+              {error && <div className="error">{error}</div>}
+
+              <button onClick={handleGenerateProof} disabled={isGenerating} className="btn-primary">
+                {isGenerating ? 'Generating Proof...' : 'Generate ZK Proof'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="success">✓ Proof generated successfully!</div>
+              <p>Now submit the CID and proof to the WillFactory contract.</p>
+
+              {error && <div className="error">{error}</div>}
+
+              <button onClick={handleSubmit} disabled={isSubmitting} className="btn-primary">
+                {isSubmitting ? 'Submitting...' : 'Submit to Blockchain'}
+              </button>
+            </>
           )}
-
-          {error && <div className="error">{error}</div>}
-
-          <button onClick={handleGenerateProof} disabled={isGenerating} className="btn-primary">
-            {isGenerating ? 'Generating Proof...' : 'Generate ZK Proof'}
-          </button>
         </>
       ) : (
         <>
-          <div className="success">✓ Proof generated successfully!</div>
-          <p>Now submit the CID and proof to the WillFactory contract.</p>
+          <div className="success-container" style={{
+            background: 'rgba(76, 175, 80, 0.1)',
+            border: '2px solid var(--success-color)',
+            borderRadius: '12px',
+            padding: '2rem',
+            marginTop: '1rem'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🎉</div>
+              <h3 style={{ color: 'var(--success-color)', marginTop: 0 }}>
+                Will Successfully Submitted!
+              </h3>
+              <p style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                Your encrypted will has been uploaded to the blockchain
+              </p>
+            </div>
 
-          {error && <div className="error">{error}</div>}
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.3)',
+              padding: '1.5rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '0.9rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  IPFS CID:
+                </label>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: '#1a1a1a',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  <code style={{
+                    flex: 1,
+                    wordBreak: 'break-all',
+                    color: 'var(--success-color)',
+                    fontSize: '0.95rem'
+                  }}>
+                    {cid}
+                  </code>
+                  <button
+                    onClick={handleCopyCID}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: copied ? 'var(--success-color)' : 'var(--primary-color)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {copied ? '✓ Copied!' : '📋 Copy'}
+                  </button>
+                </div>
+              </div>
 
-          <button onClick={handleSubmit} disabled={isSubmitting} className="btn-primary">
-            {isSubmitting ? 'Submitting...' : 'Submit to Blockchain'}
-          </button>
+              {txHash && (
+                <div>
+                  <label style={{
+                    display: 'block',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '0.9rem',
+                    marginBottom: '0.5rem'
+                  }}>
+                    Transaction Hash:
+                  </label>
+                  <code style={{
+                    display: 'block',
+                    wordBreak: 'break-all',
+                    background: '#1a1a1a',
+                    padding: '0.75rem',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-color)',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '0.85rem'
+                  }}>
+                    {txHash}
+                  </code>
+                </div>
+              )}
+            </div>
+
+            <div style={{
+              background: 'rgba(33, 150, 243, 0.1)',
+              border: '1px solid rgba(33, 150, 243, 0.3)',
+              borderRadius: '6px',
+              padding: '1rem',
+              marginBottom: '1.5rem'
+            }}>
+              <p style={{
+                margin: 0,
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '0.9rem',
+                lineHeight: '1.6'
+              }}>
+                💡 <strong>Important:</strong> Save this CID! You'll need it to:
+              </p>
+              <ul style={{
+                marginTop: '0.5rem',
+                marginBottom: 0,
+                paddingLeft: '2rem',
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontSize: '0.9rem'
+              }}>
+                <li>Have the Notary verify and notarize your will</li>
+                <li>Have the Oracle probate your will after death confirmation</li>
+                <li>Allow the Executor to download and execute your will</li>
+              </ul>
+            </div>
+
+            <button
+              onClick={handleComplete}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                background: 'var(--primary-color)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary-hover)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'var(--primary-color)'}
+            >
+              Complete & Start Over
+            </button>
+          </div>
         </>
       )}
     </div>

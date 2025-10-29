@@ -1,10 +1,9 @@
 /**
  * Encrypt Step - Now includes:
- * 1. Generate salt
- * 2. Predict Will address
- * 3. Generate Permit2 signature
- * 4. Serialize will data
- * 5. Encrypt serialized data
+ * 1. Generate salt and predict Will address (combined API call)
+ * 2. Generate Permit2 signature
+ * 3. Serialize will data
+ * 4. Encrypt serialized data
  */
 
 import React, { useState } from 'react';
@@ -12,7 +11,6 @@ import { useWallet } from '@hooks/useWallet';
 import { generateWillPermit2Signature } from '@utils/permit2/signature';
 import {
   encryptWill as encryptWillAPI,
-  generateSalt as generateSaltAPI,
   predictWillAddress as predictWillAddressAPI
 } from '@utils/api/client';
 import type { WillData, EncryptedData } from '../TestatorPage';
@@ -105,24 +103,19 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
     setError(null);
 
     try {
-      // Step 1: Generate salt via backend API
-      setProgress('Generating salt for Will contract...');
-      const saltString = await generateSaltAPI();
-      const salt = BigInt(saltString);
-
-      // Step 2: Predict Will contract address via backend API
-      setProgress('Predicting Will contract address...');
+      // Step 1 & 2: Generate salt and predict Will contract address via backend API
+      setProgress('Generating salt and predicting Will contract address...');
       const estatesForAPI = willData.estates.map((e) => ({
         beneficiary: e.beneficiary,
         token: e.token,
         amount: e.amount,
       }));
-      const willAddress = await predictWillAddressAPI(
+      const { willAddress, salt: saltString } = await predictWillAddressAPI(
         willData.testator,
         willData.executor,
-        estatesForAPI,
-        saltString
+        estatesForAPI
       );
+      const salt = BigInt(saltString);
 
       // Step 3: Generate Permit2 signature (requires user wallet signature)
       setProgress('Generating Permit2 signature (please sign in wallet)...');
