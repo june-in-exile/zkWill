@@ -1,4 +1,4 @@
-# Web3 Will System
+# zkWill
 
 A blockchain-based inheritance management framework that leverages Permit2, CREATE2, Zero-Knowledge Proofs (ZKP), and IPFS to securely handle the creation, notarization, and execution of on-chain wills.
 
