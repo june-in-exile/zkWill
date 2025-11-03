@@ -27,9 +27,15 @@ This starts the server on the port specified in `.env` (default: 3001).
 
 ```json
 {
-  "ciphertext": [/* array of numbers */],
-  "key": [/* array of numbers */],
-  "iv": [/* array of numbers */]
+  "ciphertext": [
+    /* array of numbers */
+  ],
+  "key": [
+    /* array of numbers */
+  ],
+  "iv": [
+    /* array of numbers */
+  ]
 }
 ```
 
@@ -39,7 +45,10 @@ This starts the server on the port specified in `.env` (default: 3001).
 {
   "proof": {
     "pi_a": ["...", "..."],
-    "pi_b": [["...", "..."], ["...", "..."]],
+    "pi_b": [
+      ["...", "..."],
+      ["...", "..."]
+    ],
     "pi_c": ["...", "..."],
     "protocol": "groth16",
     "curve": "bn128"
@@ -201,9 +210,20 @@ make upload-cid
 **Role**: Notary
 **Goal**: Verify and notarize the CID in WillFactory to establish legal validity
 
-### Step 1: Notarize CID
+### Step 1: Witness Signatures
 
-The notary notarizes the uploaded CID in `WillFactory.sol`:
+Two witnesses must sign the CID off-chain. These signatures are then passed to the notary to be verified on-chain.
+
+```sh
+make witnessesSignCid
+```
+
+- **Updates**: The following `.env` variables are automatically updated:
+  - `WITNESS1_SIGNATURE`, `WITNESS2_SIGNATURE`
+
+### Step 2: Notarize CID
+
+The notary notarizes the uploaded CID in `WillFactory.sol`, providing the witness signatures for verification.
 
 ```sh
 make notarize-cid

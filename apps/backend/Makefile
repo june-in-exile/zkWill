@@ -1,6 +1,6 @@
 .PHONY: all
 
-all: clean testatorUploadsEncryptedWill notarySignsCid oracleProbateCid executorTransfersEstates
+all: clean testatorUploadsEncryptedWill witnessesSignCid notarySignsCid oracleProbateCid executorTransfersEstates
 
 clean:
 	@echo "Resetting environment variables..."
@@ -58,7 +58,10 @@ upload-cid:
 	@pnpm exec tsx src/onchain/willFactory/uploadCid.ts
 
 
-notarySignsCid: notarize-cid
+notarySignsCid: witnessesSignCid notarize-cid
+
+witnessesSignCid: witness-cid
+	@pnpm exec tsx src/offchain/signature/witness.ts
 
 notarize-cid:
 	@pnpm exec tsx src/onchain/willFactory/notarizeCid.ts
