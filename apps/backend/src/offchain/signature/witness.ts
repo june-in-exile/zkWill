@@ -67,10 +67,10 @@ async function processWitnessSigning(): Promise<ProcessResult> {
     );
 
     return {
-      witness1Signature,
-      witness2Signature,
       witness1Address: await witness1.getAddress(),
       witness2Address: await witness2.getAddress(),
+      witness1Signature,
+      witness2Signature,
     };
   } catch (error) {
     console.error(

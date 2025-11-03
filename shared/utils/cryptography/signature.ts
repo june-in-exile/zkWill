@@ -29,46 +29,6 @@ async function loadPermit2SDK() {
 }
 
 /**
- * Sign string message
- */
-async function signString(
-  message: string,
-  privateKey: string,
-): Promise<string> {
-  try {
-    // Create wallet instance
-    const wallet = createWallet(privateKey);
-
-    // Hash the message
-    const hash = keccak256(message);
-    const hashBytes = ethers.getBytes(hash);
-    if (!hashBytes || hashBytes.length !== 32) {
-      throw new Error("Invalid hash bytes generated");
-    }
-
-    // Perform signing
-    const signature = await wallet.signMessage(hashBytes);
-
-    // Validate signature format
-    validateSignature(signature);
-
-    // Additional validation - verify signature immediately
-    const signerAddress = wallet.address;
-    const isValid = await verify(message, signature, signerAddress);
-
-    if (!isValid) {
-      throw new Error("Generated signature failed immediate verification");
-    }
-
-    return signature;
-  } catch (error) {
-    throw new Error(
-      `String signing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
-  }
-}
-
-/**
  * Verify signature
  */
 async function verify(
@@ -202,4 +162,29 @@ async function signPermit2(
   }
 }
 
-export { signString, verify, recoverSigner, signTypedData, signPermit2 };
+/**
+ * Sign message with a signer
+ */
+async function signMessage(
+  message: string,
+  signer: ethers.Signer,
+): Promise<string> {
+  try {
+    const messageHash = keccak256(message);
+    const messageHashBytes = ethers.getBytes(messageHash);
+
+    // Perform signing
+    const signature = await signer.signMessage(messageHashBytes);
+
+    // Validate signature format
+    validateSignature(signature);
+
+    return signature;
+  } catch (error) {
+    throw new Error(
+      `Message signing failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+}
+
+export { verify, recoverSigner, signTypedData, signPermit2, signMessage };

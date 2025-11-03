@@ -15,6 +15,8 @@ interface UploadCid {
   WILL_FACTORY: string;
   TESTATOR_PRIVATE_KEY: string;
   CID: string;
+  WITNESS1: string;
+  WITNESS2: string;
 }
 
 interface SubmitProof {
@@ -27,10 +29,18 @@ interface IpfsDownload {
   CID: string;
 }
 
+interface WitnessSigning {
+  WITNESS1_PRIVATE_KEY: string;
+  WITNESS2_PRIVATE_KEY: string;
+  CID: string;
+}
+
 interface NotarizeCid {
   WILL_FACTORY: string;
   NOTARY_PRIVATE_KEY: string;
   CID: string;
+  WITNESS1_SIGNATURE: string;
+  WITNESS2_SIGNATURE: string;
 }
 
 interface CreateWill {
@@ -56,6 +66,7 @@ export type {
   UploadCid,
   SubmitProof,
   IpfsDownload,
+  WitnessSigning,
   NotarizeCid,
   CreateWill,
   ProbateWill,

@@ -17,6 +17,7 @@ import chalk from "chalk";
 
 interface NotarizeCidData {
   cid: string;
+  witnessSignatures: [string, string];
 }
 
 interface ProcessResult {
@@ -51,6 +52,16 @@ function printNotarizationDetails(notarizeData: NotarizeCidData): void {
   console.log(chalk.blue("\n📋 CID Information:"));
   console.log(chalk.gray("- CID:"), chalk.white(notarizeData.cid));
 
+  console.log(chalk.blue("\n✍️ Witness Signatures:"));
+  console.log(
+    chalk.gray("- Witness 1:"),
+    chalk.white(preview.longString(notarizeData.witnessSignatures[0])),
+  );
+  console.log(
+    chalk.gray("- Witness 2:"),
+    chalk.white(preview.longString(notarizeData.witnessSignatures[1])),
+  );
+
   console.log(chalk.cyan("\n=== End of Notarization Details ===\n"));
 }
 
@@ -68,6 +79,7 @@ async function executeNotarizeCID(
 
     const tx = await contract.notarizeCid(
       notarizeData.cid,
+      notarizeData.witnessSignatures,
     );
 
     const receipt = await tx.wait();
@@ -101,7 +113,7 @@ async function executeNotarizeCID(
  */
 async function processNotarizeCID(): Promise<ProcessResult> {
   try {
-    const { WILL_FACTORY, NOTARY_PRIVATE_KEY, CID } =
+    const { WILL_FACTORY, NOTARY_PRIVATE_KEY, CID, WITNESS1_SIGNATURE, WITNESS2_SIGNATURE } =
       validateEnvironmentVariables();
 
     const provider = new JsonRpcProvider(NETWORK_CONFIG.rpc.current);
@@ -117,6 +129,7 @@ async function processNotarizeCID(): Promise<ProcessResult> {
 
     const result = await executeNotarizeCID(contract, {
       cid: CID,
+      witnessSignatures: [WITNESS1_SIGNATURE, WITNESS2_SIGNATURE],
     });
 
     await updateEnvironmentVariables([

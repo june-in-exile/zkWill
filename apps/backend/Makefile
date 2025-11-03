@@ -1,6 +1,6 @@
 .PHONY: all
 
-all: clean testatorUploadsEncryptedWill witnessesSignCid notarySignsCid oracleProbateCid executorTransfersEstates
+all: clean testator-uploads-encrypted-will notary-signs-cid oracle-probate-cid executor-transfers-estates
 
 clean:
 	@echo "Resetting environment variables..."
@@ -28,7 +28,7 @@ clean:
 	@@echo "Initialization completed"
 
 
-testatorUploadsEncryptedWill: approve-permit2 predict-address sign-permit2 verify-permit2 serialize-will encrypt-will prove-for-cid-upload upload-will upload-cid
+testator-uploads-encrypted-will: approve-permit2 predict-address sign-permit2 verify-permit2 serialize-will encrypt-will prove-for-cid-upload upload-will upload-cid
 
 approve-permit2:
 	@pnpm exec tsx src/onchain/permit2/approveTokenPermit2.ts
@@ -58,22 +58,22 @@ upload-cid:
 	@pnpm exec tsx src/onchain/willFactory/uploadCid.ts
 
 
-notarySignsCid: witnessesSignCid notarize-cid
+notary-signs-cid: witnesses-sign-cid notarize-cid
 
-witnessesSignCid: witness-cid
+witnesses-sign-cid:
 	@pnpm exec tsx src/offchain/signature/witness.ts
 
 notarize-cid:
 	@pnpm exec tsx src/onchain/willFactory/notarizeCid.ts
 
 
-oracleProbateCid: probate-cid
+oracle-probate-cid: probate-cid
 
 probate-cid:
 	@pnpm exec tsx src/onchain/will/probateCid.ts
 
 
-executorTransfersEstates: download-will decrypt-will deserialize-will prove-for-will-creation create-will signature-transfer
+executor-transfers-estates: download-will decrypt-will deserialize-will prove-for-will-creation create-will signature-transfer
 
 download-will:
 	@pnpm exec tsx src/offchain/ipfs/download.ts

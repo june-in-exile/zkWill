@@ -32,6 +32,7 @@ interface UploadCidData {
   proof: CidUploadProofData;
   will: JsonCidVerifier.TypedJsonObject;
   cid: string;
+  witnesses: string[];
 }
 
 interface ProcessResult {
@@ -64,6 +65,11 @@ function printUploadCidData(uploadData: UploadCidData): void {
   console.log(chalk.blue("\n📋 CID Information:"));
   console.log(chalk.gray("- CID:"), chalk.white(uploadData.cid));
 
+  console.log(chalk.blue("\n👥 Witnesses:"));
+  uploadData.witnesses.forEach((witness, index) => {
+    console.log(chalk.gray(`- Witness ${index + 1}:`), chalk.white(witness));
+  });
+
   printEncryptedWillJson(uploadData.will);
 
   printProof(uploadData.proof);
@@ -90,6 +96,7 @@ async function executeUploadCid(
       uploadData.proof.pubSignals,
       uploadData.will,
       uploadData.cid,
+      uploadData.witnesses,
     );
 
     const receipt = await tx.wait();
@@ -128,7 +135,7 @@ async function processUploadCid(): Promise<ProcessResult> {
       PATHS_CONFIG.zkp.cidUpload.proof,
       PATHS_CONFIG.zkp.cidUpload.public,
     ]);
-    const { WILL_FACTORY, TESTATOR_PRIVATE_KEY, CID } =
+    const { WILL_FACTORY, TESTATOR_PRIVATE_KEY, CID, WITNESS1, WITNESS2 } =
       validateEnvironmentVariables();
 
     const provider = new JsonRpcProvider(NETWORK_CONFIG.rpc.current);
@@ -151,6 +158,7 @@ async function processUploadCid(): Promise<ProcessResult> {
       proof,
       will,
       cid: CID,
+      witnesses: [WITNESS1, WITNESS2],
     });
 
     await updateEnvironmentVariables([

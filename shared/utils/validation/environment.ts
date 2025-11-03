@@ -103,11 +103,13 @@ const presetValidations = {
   }),
 
   uploadCid: (): EnvironmentValidationOptions => ({
-    required: ["WILL_FACTORY", "TESTATOR_PRIVATE_KEY", "CID"],
+    required: ["WILL_FACTORY", "TESTATOR_PRIVATE_KEY", "CID", "WITNESS1", "WITNESS2"],
     validators: {
       WILL_FACTORY: validators.ethereumAddress,
       TESTATOR_PRIVATE_KEY: validators.privateKey,
       CID: validators.cidv1,
+      WITNESS1: validators.ethereumAddress,
+      WITNESS2: validators.ethereumAddress,
     },
   }),
 
@@ -131,12 +133,12 @@ const presetValidations = {
     },
   }),
 
-  cidSigning: (): EnvironmentValidationOptions => ({
-    required: ["CID", "NOTARY_PRIVATE_KEY", "NOTARY"],
+  witnessSigning: (): EnvironmentValidationOptions => ({
+    required: ["WITNESS1_PRIVATE_KEY", "WITNESS2_PRIVATE_KEY", "CID"],
     validators: {
+      WITNESS1_PRIVATE_KEY: validators.privateKey,
+      WITNESS2_PRIVATE_KEY: validators.privateKey,
       CID: validators.cidv1,
-      NOTARY_PRIVATE_KEY: validators.privateKey,
-      NOTARY: validators.ethereumAddress,
     },
   }),
 
@@ -145,11 +147,15 @@ const presetValidations = {
       "WILL_FACTORY",
       "NOTARY_PRIVATE_KEY",
       "CID",
+      "WITNESS1_SIGNATURE",
+      "WITNESS2_SIGNATURE",
     ],
     validators: {
       WILL_FACTORY: validators.ethereumAddress,
       NOTARY_PRIVATE_KEY: validators.privateKey,
       CID: validators.cidv1,
+      WITNESS1_SIGNATURE: validators.signature,
+      WITNESS2_SIGNATURE: validators.signature,
     },
   }),
 
