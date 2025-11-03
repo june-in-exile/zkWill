@@ -185,6 +185,25 @@
   },
   {
     "type": "function",
+    "name": "getCidWitnesses",
+    "inputs": [
+      {
+        "name": "_cid",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[2]",
+        "internalType": "address[2]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "jsonCidVerifier",
     "inputs": [],
     "outputs": [
@@ -217,6 +236,11 @@
         "name": "_cid",
         "type": "string",
         "internalType": "string"
+      },
+      {
+        "name": "_witnessSignatures",
+        "type": "bytes[2]",
+        "internalType": "bytes[2]"
       }
     ],
     "outputs": [],
@@ -446,6 +470,11 @@
         "name": "_cid",
         "type": "string",
         "internalType": "string"
+      },
+      {
+        "name": "_witnesses",
+        "type": "address[2]",
+        "internalType": "address[2]"
       }
     ],
     "outputs": [],
@@ -695,6 +724,38 @@
   },
   {
     "type": "error",
+    "name": "ECDSAInvalidSignature",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ECDSAInvalidSignatureLength",
+    "inputs": [
+      {
+        "name": "length",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ECDSAInvalidSignatureS",
+    "inputs": [
+      {
+        "name": "s",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "InvalidWitnessCount",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "JsonCidInvalid",
     "inputs": [
       {
@@ -825,6 +886,27 @@
     "type": "error",
     "name": "WillCreationProofInvalid",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WitnessSignatureInvalid",
+    "inputs": [
+      {
+        "name": "cid",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "witness",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "signature",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ]
   },
   {
     "type": "error",

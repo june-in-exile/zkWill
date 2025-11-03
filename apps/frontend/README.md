@@ -1,6 +1,6 @@
 # Frontend Application
 
-React + TypeScript + Vite frontend for the Web3 Will System using a **hybrid architecture** that combines client-side wallet operations with server-side heavy computations.
+React + TypeScript + Vite frontend for the ZK Will System using a **hybrid architecture** that combines client-side wallet operations with server-side heavy computations.
 
 ## Architecture Overview (Hybrid Approach)
 

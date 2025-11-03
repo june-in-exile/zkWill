@@ -179,11 +179,30 @@ export const useWallet = () => {
   useEffect(() => {
     if (!window.ethereum) return;
 
-    const handleAccountsChanged = (accounts: string[]) => {
+    const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
         disconnect();
       } else if (accounts[0] !== state.address) {
-        setState((prev) => ({ ...prev, address: accounts[0] }));
+        // Update provider and signer when account changes
+        try {
+          const provider = new BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          const network = await provider.getNetwork();
+          const chainId = Number(network.chainId);
+
+          setState((prev) => ({
+            ...prev,
+            address: accounts[0],
+            provider,
+            signer,
+            chainId,
+            isCorrectNetwork: chainId === EXPECTED_CHAIN_ID
+          }));
+        } catch (error) {
+          console.error('Failed to update signer after account change:', error);
+          // Fallback to just updating address
+          setState((prev) => ({ ...prev, address: accounts[0] }));
+        }
       }
     };
 

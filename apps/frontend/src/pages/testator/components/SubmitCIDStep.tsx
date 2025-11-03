@@ -60,10 +60,11 @@ function encryptedDataToTypedJsonObject(encryptedData: EncryptedData) {
 interface Props {
   cid: string;
   encryptedData: EncryptedData;
+  witnesses: [string, string];
   onSubmitted: () => void;
 }
 
-const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, onSubmitted }) => {
+const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, witnesses, onSubmitted }) => {
   const { signer } = useWallet();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,11 +108,12 @@ const SubmitCIDStep: React.FC<Props> = ({ cid, encryptedData, onSubmitted }) => 
 
     try {
       console.log('Submitting CID to WillFactory:', cid);
+      console.log('Witnesses:', witnesses);
 
       const formattedProof = formatProofForContract(proof);
       const willObject = encryptedDataToTypedJsonObject(encryptedData);
 
-      const receipt = await uploadCid(signer, cid, formattedProof, willObject);
+      const receipt = await uploadCid(signer, cid, formattedProof, willObject, witnesses);
 
       console.log('CID uploaded successfully:', receipt.hash);
       setIsSubmitted(true);

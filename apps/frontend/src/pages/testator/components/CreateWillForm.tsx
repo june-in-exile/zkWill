@@ -9,6 +9,8 @@ interface Props {
 const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
   // Load default values from environment
   const defaultExecutor = import.meta.env.VITE_DEFAULT_EXECUTOR || '';
+  const defaultWitness1 = import.meta.env.VITE_WITNESS1 || '';
+  const defaultWitness2 = import.meta.env.VITE_WITNESS2 || '';
   const defaultEstates: Array<{ beneficiary: string; token: string; amount: string }> = [];
 
   // Add first estate if available
@@ -35,6 +37,8 @@ const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
   }
 
   const [executor, setExecutor] = useState(defaultExecutor);
+  const [witness1, setWitness1] = useState(defaultWitness1);
+  const [witness2, setWitness2] = useState(defaultWitness2);
   const [estates, setEstates] = useState(defaultEstates);
 
   const addEstate = () => {
@@ -56,6 +60,7 @@ const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
     onSubmit({
       testator: testatorAddress,
       executor,
+      witnesses: [witness1, witness2],
       estates: estates.map((estate) => ({
         beneficiary: estate.beneficiary,
         token: estate.token,
@@ -79,6 +84,28 @@ const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
           type="text"
           value={executor}
           onChange={(e) => setExecutor(e.target.value)}
+          placeholder="0x..."
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Witness 1 Address *</label>
+        <input
+          type="text"
+          value={witness1}
+          onChange={(e) => setWitness1(e.target.value)}
+          placeholder="0x..."
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Witness 2 Address *</label>
+        <input
+          type="text"
+          value={witness2}
+          onChange={(e) => setWitness2(e.target.value)}
           placeholder="0x..."
           required
         />

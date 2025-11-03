@@ -6,7 +6,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="home-page">
       <div className="hero">
-        <h1>Web3 Will System</h1>
+        <h1>ZK Will System</h1>
         <p className="subtitle">
           A blockchain-based inheritance management framework leveraging ZKP, IPFS, and smart contracts
         </p>

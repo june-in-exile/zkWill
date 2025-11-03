@@ -16,7 +16,7 @@ export const getWillFactoryContract = (signer: JsonRpcSigner) => {
 };
 
 /**
- * Upload CID with ZKP proof
+ * Upload CID with ZKP proof and witness addresses
  */
 export const uploadCid = async (
   signer: JsonRpcSigner,
@@ -34,7 +34,8 @@ export const uploadCid = async (
       numberArray: string[];
       valueType: number;
     }>;
-  }
+  },
+  witnesses: [string, string]
 ) => {
   const contract = getWillFactoryContract(signer);
 
@@ -44,7 +45,8 @@ export const uploadCid = async (
     proof.pi_c,
     proof.publicSignals,
     will,
-    cid
+    cid,
+    witnesses
   );
 
   const receipt = await tx.wait();
@@ -52,15 +54,16 @@ export const uploadCid = async (
 };
 
 /**
- * Notarize a CID
+ * Notarize a CID with witness signatures
  */
 export const notarizeCid = async (
   signer: JsonRpcSigner,
-  cid: string
+  cid: string,
+  witnessSignatures: [string, string]
 ) => {
   const contract = getWillFactoryContract(signer);
 
-  const tx = await contract.notarizeCid(cid);
+  const tx = await contract.notarizeCid(cid, witnessSignatures);
   const receipt = await tx.wait();
   return receipt;
 };

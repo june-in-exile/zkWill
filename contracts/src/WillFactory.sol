@@ -102,6 +102,10 @@ contract WillFactory {
         return _cidProbatedTimes[_cid];
     }
 
+    function getCidWitnesses(string calldata _cid) external view returns (address[2] memory) {
+        return _cidWitnesses[_cid];
+    }
+
     function _predictWill(address _testator, address _executor, Will.Estate[] memory estates, uint256 _salt)
         internal
         view

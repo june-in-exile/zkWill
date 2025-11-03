@@ -17,7 +17,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <nav className="navbar">
         <div className="nav-container">
           <div className="nav-brand">
-            <Link to="/">Web3 Will System</Link>
+            <Link to="/">ZK Will System</Link>
           </div>
           <div className="nav-links">
             <Link to="/testator" className={isActive('/testator') ? 'active' : ''}>

@@ -10,6 +10,7 @@ import './TestatorPage.css';
 export interface WillData {
   testator: string;
   executor: string;
+  witnesses: string[];
   estates: Array<{
     beneficiary: string;
     token: string;
@@ -230,10 +231,15 @@ const TestatorPage: React.FC = () => {
             )}
           </div>
         )}
-        {currentStep >= 5 && cid && encryptedData && (
+        {currentStep >= 5 && cid && encryptedData && willData && (
           <div className={`step-section ${currentStep > 5 ? 'completed' : 'active'}`}>
             <h3 className="step-section-title">Step 5: Submit CID</h3>
-            <SubmitCIDStep cid={cid} encryptedData={encryptedData} onSubmitted={handleSubmitted} />
+            <SubmitCIDStep
+              cid={cid}
+              encryptedData={encryptedData}
+              witnesses={[willData.witnesses[0], willData.witnesses[1]]}
+              onSubmitted={handleSubmitted}
+            />
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 # Zero-Knowledge Proof Circuits
 
-This directory contains multiple Circom circuit implementations for the **Web3 Will System**, supporting a complete ZK-SNARK workflow from circuit compilation to smart contract deployment. The project focuses on privacy-preserving functionality for digital estate management.
+This directory contains multiple Circom circuit implementations for the **ZK Will System**, supporting a complete ZK-SNARK workflow from circuit compilation to smart contract deployment. The project focuses on privacy-preserving functionality for digital estate management.
 
 ## 🎯 Project Overview
 
@@ -8,10 +8,10 @@ This ZKP module is a core component of the Web3 will management system, implemen
 
 ### Main Circuits
 
-| Circuit                | Scenario                                                                                                          | Components                                                                                                                                                                              |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **uploadCid Circuit**  | Testator uploads encrypted will to IPFS and proves its validity to the blockchain without revealing will content. | 1. **Decryption**: Decrypt ciphertext (public) to plaintext (private)<br>2. **Permit2 signature verification**: Validate permit2 signature (private) within the decrypted content       |
-| **createWill Circuit** | After testator's death, executor creates will contract with verified decryption.                                  | 1. **Decryption**: Decrypt ciphertext (public) to plaintext (public)<br> |
+| Circuit                | Scenario                                                                                                          | Components                                                                                                                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **uploadCid Circuit**  | Testator uploads encrypted will to IPFS and proves its validity to the blockchain without revealing will content. | 1. **Decryption**: Decrypt ciphertext (public) to plaintext (private)<br>2. **Permit2 signature verification**: Validate permit2 signature (private) within the decrypted content |
+| **createWill Circuit** | After testator's death, executor creates will contract with verified decryption.                                  | 1. **Decryption**: Decrypt ciphertext (public) to plaintext (public)<br>                                                                                                          |
 
 ### Shared Infrastructure
 
