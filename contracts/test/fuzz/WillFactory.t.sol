@@ -27,13 +27,25 @@ contract WillFactoryFuzzTest is TestHelpers {
     address oracle = makeAddr("oracle");
     address executor = makeAddr("executor");
     address permit2 = makeAddr("permit2");
+    address witness0;
+    uint256 witness0PrivateKey;
+    address witness1;
+    uint256 witness1PrivateKey;
     uint8 maxEstates = 2;
+    address[2] witnesses;
 
     JsonCidVerifier.TypedJsonObject willJson;
     CidUploadProofData cidUploadProof;
     WillCreationProofData willCreationProof;
 
     function setUp() public {
+        // Initialize witnesses
+        witness0PrivateKey = 0x2345678901234567890123456789012345678901234567890123456789012345;
+        witness0 = vm.addr(witness0PrivateKey);
+        witness1PrivateKey = 0x3456789012345678901234567890123456789012345678901234567890123456;
+        witness1 = vm.addr(witness1PrivateKey);
+        witnesses = [witness0, witness1];
+
         // Initialize test data from files first
         willJson = _getEncryptedWillFromFile();
         cidUploadProof = _getCidUploadProofFromFiles();
@@ -54,6 +66,20 @@ contract WillFactoryFuzzTest is TestHelpers {
             permit2,
             maxEstates
         );
+    }
+
+    function _signCidAsWitness(string memory _cid, uint256 privateKey) internal pure returns (bytes memory) {
+        bytes32 messageHash = keccak256(abi.encodePacked(_cid));
+        bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, ethSignedMessageHash);
+        return abi.encodePacked(r, s, v);
+    }
+
+    function _getWitnessSignatures(string memory _cid) internal view returns (bytes[2] memory) {
+        bytes[2] memory signatures;
+        signatures[0] = _signCidAsWitness(_cid, witness0PrivateKey);
+        signatures[1] = _signCidAsWitness(_cid, witness1PrivateKey);
+        return signatures;
     }
 
     function test_PredictWill_DeterministicOutput(
@@ -123,7 +149,8 @@ contract WillFactoryFuzzTest is TestHelpers {
             cidUploadProof.pC,
             cidUploadProof.pubSignals,
             modifiedWill,
-            "test_cid"
+            "test_cid",
+            witnesses
         );
     }
 
@@ -152,7 +179,8 @@ contract WillFactoryFuzzTest is TestHelpers {
             cidUploadProof.pC,
             cidUploadProof.pubSignals,
             modifiedWill,
-            "test_cid"
+            "test_cid",
+            witnesses
         );
     }
 
@@ -175,13 +203,14 @@ contract WillFactoryFuzzTest is TestHelpers {
             cidUploadProof.pC,
             cidUploadProof.pubSignals,
             willJson,
-            cid
+            cid,
+            witnesses
         );
 
         vm.warp(block.timestamp + 1);
 
         vm.prank(notary);
-        factory.notarizeCid(cid);
+        factory.notarizeCid(cid, _getWitnessSignatures(cid));
 
         vm.warp(block.timestamp + 2);
 
@@ -229,13 +258,14 @@ contract WillFactoryFuzzTest is TestHelpers {
             cidUploadProof.pC,
             cidUploadProof.pubSignals,
             willJson,
-            cid
+            cid,
+            witnesses
         );
 
         vm.warp(block.timestamp + 1);
 
         vm.prank(notary);
-        factory.notarizeCid(cid);
+        factory.notarizeCid(cid, _getWitnessSignatures(cid));
 
         vm.warp(block.timestamp + 2);
 

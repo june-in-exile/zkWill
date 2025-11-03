@@ -30,6 +30,11 @@ contract WillFactoryIntegrationTest is TestHelpers {
     address permit2;
     uint8 maxEstates;
     address random = makeAddr("random");
+    address witness0;
+    uint256 witness0PrivateKey;
+    address witness1;
+    uint256 witness1PrivateKey;
+    address[2] witnesses;
 
     struct TestVector {
         string name;
@@ -46,6 +51,13 @@ contract WillFactoryIntegrationTest is TestHelpers {
     TestVector[] testVectors;
 
     function setUp() public {
+        // Initialize witnesses
+        witness0PrivateKey = 0x2345678901234567890123456789012345678901234567890123456789012345;
+        witness0 = vm.addr(witness0PrivateKey);
+        witness1PrivateKey = 0x3456789012345678901234567890123456789012345678901234567890123456;
+        witness1 = vm.addr(witness1PrivateKey);
+        witnesses = [witness0, witness1];
+
         CidUploadVerifierConstants1 cidUploadConstants1 = new CidUploadVerifierConstants1();
         CidUploadVerifierConstants2 cidUploadConstants2 = new CidUploadVerifierConstants2();
         cidUploadVerifier = new CidUploadVerifier(address(cidUploadConstants1), address(cidUploadConstants2));
@@ -96,6 +108,20 @@ contract WillFactoryIntegrationTest is TestHelpers {
         }
     }
 
+    function _signCidAsWitness(string memory _cid, uint256 privateKey) internal pure returns (bytes memory) {
+        bytes32 messageHash = keccak256(abi.encodePacked(_cid));
+        bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, ethSignedMessageHash);
+        return abi.encodePacked(r, s, v);
+    }
+
+    function _getWitnessSignatures(string memory _cid) internal view returns (bytes[2] memory) {
+        bytes[2] memory signatures;
+        signatures[0] = _signCidAsWitness(_cid, witness0PrivateKey);
+        signatures[1] = _signCidAsWitness(_cid, witness1PrivateKey);
+        return signatures;
+    }
+
     function test_FullWorkflow_UploadNotarizeProbateCreate() public {
         TestVector memory tv = testVectors[0];
 
@@ -110,7 +136,8 @@ contract WillFactoryIntegrationTest is TestHelpers {
             tv.cidUploadProof.pC,
             tv.cidUploadProof.pubSignals,
             tv.willTypedJsonObj,
-            tv.cid
+            tv.cid,
+            witnesses
         );
 
         // Verify upload
@@ -122,13 +149,13 @@ contract WillFactoryIntegrationTest is TestHelpers {
 
         vm.expectRevert(abi.encodeWithSelector(WillFactory.NotNotary.selector, random, notary));
         vm.prank(random);
-        willFactory.notarizeCid(tv.cid);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
         vm.expectEmit(true, false, false, true);
         emit WillFactory.CidNotarized(tv.cid, block.timestamp);
 
         vm.prank(notary);
-        willFactory.notarizeCid(tv.cid);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
         // Verify notarization
         uint256 notarizeTime = willFactory.cidNotarizedTimes(tv.cid);
@@ -204,7 +231,8 @@ contract WillFactoryIntegrationTest is TestHelpers {
             tv.cidUploadProof.pC,
             tv.cidUploadProof.pubSignals,
             tv.willTypedJsonObj,
-            tv.cid
+            tv.cid,
+            witnesses
         );
 
         // Try to probate will without notarization - should fail
@@ -215,7 +243,7 @@ contract WillFactoryIntegrationTest is TestHelpers {
         // Notarize at time T (same as upload) - should fail
         vm.expectRevert(abi.encodeWithSelector(WillFactory.CidNotUploaded.selector, tv.cid));
         vm.prank(notary);
-        willFactory.notarizeCid(tv.cid);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
         // Fast forward time and re-upload - should fail
         vm.warp(block.timestamp + 1);
@@ -227,12 +255,13 @@ contract WillFactoryIntegrationTest is TestHelpers {
             tv.cidUploadProof.pC,
             tv.cidUploadProof.pubSignals,
             tv.willTypedJsonObj,
-            tv.cid
+            tv.cid,
+            witnesses
         );
         
         // Notarize after upload - should success
         vm.prank(notary);
-        willFactory.notarizeCid(tv.cid);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
         // Try to create will without probation - should fail
         vm.expectRevert(abi.encodeWithSelector(WillFactory.CidNotProbated.selector, tv.cid));
@@ -255,7 +284,7 @@ contract WillFactoryIntegrationTest is TestHelpers {
         vm.warp(block.timestamp + 1);
         vm.expectRevert(abi.encodeWithSelector(WillFactory.AlreadyNotarized.selector, tv.cid));
         vm.prank(notary);
-        willFactory.notarizeCid(tv.cid);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
         // Probate after notarization - should success
         vm.prank(oracle);
@@ -292,7 +321,8 @@ contract WillFactoryIntegrationTest is TestHelpers {
             tv.cidUploadProof.pC,
             tv.cidUploadProof.pubSignals,
             tv.willTypedJsonObj,
-            tv.cid
+            tv.cid,
+            witnesses
         );
 
         // Verify upload
@@ -324,7 +354,8 @@ contract WillFactoryIntegrationTest is TestHelpers {
             tv.cidUploadProof.pC,
             tv.cidUploadProof.pubSignals,
             tv.willTypedJsonObj,
-            tv.cid
+            tv.cid,
+            witnesses
         );
 
         uint256 newUploadTime = willFactory.cidUploadedTimes(tv.cid);
@@ -334,7 +365,7 @@ contract WillFactoryIntegrationTest is TestHelpers {
         // Try to revoke notarized CID with revokeUploadedCid - should fail
         vm.warp(block.timestamp + 1);
         vm.prank(notary);
-        willFactory.notarizeCid(tv.cid);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
         
         vm.expectRevert(abi.encodeWithSelector(WillFactory.AlreadyNotarized.selector, tv.cid));
         vm.prank(tv.testator);
@@ -358,13 +389,14 @@ contract WillFactoryIntegrationTest is TestHelpers {
             tv.cidUploadProof.pC,
             tv.cidUploadProof.pubSignals,
             tv.willTypedJsonObj,
-            tv.cid
+            tv.cid,
+            witnesses
         );
 
         // Step 2: Notarize CID
         vm.warp(block.timestamp + 1);
         vm.prank(notary);
-        willFactory.notarizeCid(tv.cid);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
         // Verify notarization
         uint256 notarizeTime = willFactory.cidNotarizedTimes(tv.cid);
@@ -384,7 +416,7 @@ contract WillFactoryIntegrationTest is TestHelpers {
         // Step 4: Verify that after revocation, we can notarize the same CID again
         vm.warp(block.timestamp + 1);
         vm.prank(notary);
-        willFactory.notarizeCid(tv.cid);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
         // Verify re-notarization worked
         uint256 newNotarizeTime = willFactory.cidNotarizedTimes(tv.cid);
@@ -414,13 +446,14 @@ contract WillFactoryIntegrationTest is TestHelpers {
             tv.cidUploadProof.pC,
             tv.cidUploadProof.pubSignals,
             tv.willTypedJsonObj,
-            tv.cid
+            tv.cid,
+            witnesses
         );
 
         // Step 2: Notarize CID
         vm.warp(block.timestamp + 1);
         vm.prank(notary);
-        willFactory.notarizeCid(tv.cid);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
         // Step 3: Probate CID
         vm.warp(block.timestamp + 1);

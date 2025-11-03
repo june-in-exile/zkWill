@@ -23,6 +23,7 @@ contract WillFactory {
     mapping(string => uint256) private _cidUploadedTimes;
     mapping(string => uint256) private _cidNotarizedTimes;
     mapping(string => uint256) private _cidProbatedTimes;
+    mapping(string => address[2]) private _cidWitnesses;
     mapping(string => address) public wills;
 
     event CidUploaded(string indexed cid, uint256 timestamp);
@@ -46,6 +47,9 @@ contract WillFactory {
     error CidNotUploaded(string cid);
     error CidNotNotarized(string cid);
     error CidNotProbated(string cid);
+
+    error InvalidWitnessCount();
+    error WitnessSignatureInvalid(string cid, address witness, bytes signature);
 
     error WrongCiphertext();
     error WrongInitializationVector();
@@ -119,13 +123,31 @@ contract WillFactory {
         return _predictWill(_testator, _executor, estates, _salt);
     }
 
+    function _verifyWitnessSignatures(
+        string calldata _cid,
+        bytes[2] calldata _signatures
+    ) internal view {
+        address[2] memory witnesses = _cidWitnesses[_cid];
+
+        bytes32 messageHash = keccak256(abi.encodePacked(_cid));
+        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
+
+        for (uint8 i = 0; i < 2; i++) {
+            address recoveredSigner = ethSignedMessageHash.recover(_signatures[i]);
+            if (recoveredSigner != witnesses[i]) {
+                revert WitnessSignatureInvalid(_cid, witnesses[i], _signatures[i]);
+            }
+        }
+    }
+
     function uploadCid(
         uint256[2] calldata _pA,
         uint256[2][2] calldata _pB,
         uint256[2] calldata _pC,
         uint256[310] calldata _pubSignals,
         JsonCidVerifier.TypedJsonObject memory _will,
-        string calldata _cid
+        string calldata _cid,
+        address[2] calldata _witnesses
     ) external {
         if (_cidUploadedTimes[_cid] > 0) revert AlreadyUploaded(_cid);
 
@@ -149,6 +171,7 @@ contract WillFactory {
 
         if (!cidUploadVerifier.verifyProof(_pA, _pB, _pC, _pubSignals)) revert CidUploadProofInvalid();
 
+        _cidWitnesses[_cid] = _witnesses;
         _cidUploadedTimes[_cid] = block.timestamp;
         emit CidUploaded(_cid, block.timestamp);
     }
@@ -173,11 +196,13 @@ contract WillFactory {
         emit UploadedCidRevoked(_cid, block.timestamp);
     }
 
-    function notarizeCid(string calldata _cid) external onlyNotary {
+    function notarizeCid(string calldata _cid, bytes[2] calldata _witnessSignatures) external onlyNotary {
         /* Upload and notarization of CID cannot be in the same block */
         if (_cidUploadedTimes[_cid] == 0 || _cidUploadedTimes[_cid] >= block.timestamp) revert CidNotUploaded(_cid);
 
         if (_cidNotarizedTimes[_cid] > _cidUploadedTimes[_cid]) revert AlreadyNotarized(_cid);
+
+        _verifyWitnessSignatures(_cid, _witnessSignatures);
 
         _cidNotarizedTimes[_cid] = block.timestamp;
         emit CidNotarized(_cid, block.timestamp);
