@@ -19,10 +19,10 @@ contract WillFactoryUnitTest is Test {
     uint256 oraclePrivateKey;
     address permit2 = makeAddr("permit2");
     address testator = makeAddr("testator");
-    address witness0;
-    uint256 witness0PrivateKey;
     address witness1;
     uint256 witness1PrivateKey;
+    address witness2;
+    uint256 witness2PrivateKey;
     address executor = makeAddr("executor");
     address random = makeAddr("random");
 
@@ -57,13 +57,13 @@ contract WillFactoryUnitTest is Test {
         oraclePrivateKey = 0x1234567890123456789012345678901234567890123456789012345678901234;
         oracle = vm.addr(oraclePrivateKey);
 
-        witness0PrivateKey = 0x2345678901234567890123456789012345678901234567890123456789012345;
-        witness0 = vm.addr(witness0PrivateKey);
-
-        witness1PrivateKey = 0x3456789012345678901234567890123456789012345678901234567890123456;
+        witness1PrivateKey = 0x2345678901234567890123456789012345678901234567890123456789012345;
         witness1 = vm.addr(witness1PrivateKey);
 
-        witnesses = [witness0, witness1];
+        witness2PrivateKey = 0x3456789012345678901234567890123456789012345678901234567890123456;
+        witness2 = vm.addr(witness2PrivateKey);
+
+        witnesses = [witness1, witness2];
 
         mockcidUploadVerifier = new MockCidUploadVerifier();
         mockWillCreationVerifier = new MockWillCreationVerifier();
@@ -137,8 +137,8 @@ contract WillFactoryUnitTest is Test {
 
     function _getWitnessSignatures(string memory _cid) internal view returns (bytes[2] memory) {
         bytes[2] memory signatures;
-        signatures[0] = _signCidAsWitness(_cid, witness0PrivateKey);
-        signatures[1] = _signCidAsWitness(_cid, witness1PrivateKey);
+        signatures[0] = _signCidAsWitness(_cid, witness1PrivateKey);
+        signatures[1] = _signCidAsWitness(_cid, witness2PrivateKey);
         return signatures;
     }
 
@@ -748,8 +748,8 @@ contract WillFactoryUnitTest is Test {
 
         // Create signatures in wrong order
         bytes[2] memory wrongOrderSignatures;
-        wrongOrderSignatures[0] = _signCidAsWitness(cid, witness1PrivateKey); // Should be witness0
-        wrongOrderSignatures[1] = _signCidAsWitness(cid, witness0PrivateKey); // Should be witness1
+        wrongOrderSignatures[0] = _signCidAsWitness(cid, witness2PrivateKey); // Should be witness1
+        wrongOrderSignatures[1] = _signCidAsWitness(cid, witness1PrivateKey); // Should be witness2
 
         vm.expectRevert();
         vm.prank(notary);

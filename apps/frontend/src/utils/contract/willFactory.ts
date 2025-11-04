@@ -83,6 +83,37 @@ export const probateCid = async (
 };
 
 /**
+ * Check CID status (uploaded, notarized, probated)
+ */
+export const getCidStatus = async (
+  signer: JsonRpcSigner,
+  cid: string
+): Promise<{
+  isUploaded: boolean;
+  isNotarized: boolean;
+  isProbated: boolean;
+  uploadedTime: bigint;
+  notarizedTime: bigint;
+  probatedTime: bigint;
+}> => {
+  const contract = getWillFactoryContract(signer);
+
+  // Use the public getter functions (without underscore)
+  const uploadedTime = await contract.cidUploadedTimes(cid);
+  const notarizedTime = await contract.cidNotarizedTimes(cid);
+  const probatedTime = await contract.cidProbatedTimes(cid);
+
+  return {
+    isUploaded: uploadedTime > 0n,
+    isNotarized: notarizedTime > uploadedTime,
+    isProbated: probatedTime > notarizedTime,
+    uploadedTime,
+    notarizedTime,
+    probatedTime,
+  };
+};
+
+/**
  * Create Will contract
  */
 export const createWill = async (

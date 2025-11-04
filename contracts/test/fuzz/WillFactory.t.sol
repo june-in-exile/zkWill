@@ -27,10 +27,10 @@ contract WillFactoryFuzzTest is TestHelpers {
     address oracle = makeAddr("oracle");
     address executor = makeAddr("executor");
     address permit2 = makeAddr("permit2");
-    address witness0;
-    uint256 witness0PrivateKey;
     address witness1;
     uint256 witness1PrivateKey;
+    address witness2;
+    uint256 witness2PrivateKey;
     uint8 maxEstates = 2;
     address[2] witnesses;
 
@@ -40,11 +40,11 @@ contract WillFactoryFuzzTest is TestHelpers {
 
     function setUp() public {
         // Initialize witnesses
-        witness0PrivateKey = 0x2345678901234567890123456789012345678901234567890123456789012345;
-        witness0 = vm.addr(witness0PrivateKey);
-        witness1PrivateKey = 0x3456789012345678901234567890123456789012345678901234567890123456;
+        witness1PrivateKey = 0x2345678901234567890123456789012345678901234567890123456789012345;
         witness1 = vm.addr(witness1PrivateKey);
-        witnesses = [witness0, witness1];
+        witness2PrivateKey = 0x3456789012345678901234567890123456789012345678901234567890123456;
+        witness2 = vm.addr(witness2PrivateKey);
+        witnesses = [witness1, witness2];
 
         // Initialize test data from files first
         willJson = _getEncryptedWillFromFile();
@@ -77,8 +77,8 @@ contract WillFactoryFuzzTest is TestHelpers {
 
     function _getWitnessSignatures(string memory _cid) internal view returns (bytes[2] memory) {
         bytes[2] memory signatures;
-        signatures[0] = _signCidAsWitness(_cid, witness0PrivateKey);
-        signatures[1] = _signCidAsWitness(_cid, witness1PrivateKey);
+        signatures[0] = _signCidAsWitness(_cid, witness1PrivateKey);
+        signatures[1] = _signCidAsWitness(_cid, witness2PrivateKey);
         return signatures;
     }
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useWallet } from '@hooks/useWallet';
 import { downloadFromIPFS } from '@utils/ipfs/helia';
 import { decryptWill as decryptWillAPI, generateWillCreationProof } from '@utils/api/client';
-import { createWill } from '@utils/contract/willFactory';
+import { createWill, getCidStatus } from '@utils/contract/willFactory';
 import { signatureTransferToBeneficiaries } from '@utils/contract/will';
 import { encryptedWillToTypedJsonObject } from '@utils/transform/encryptedWill';
 import { formatProofForContract } from '@utils/zkp/snarkjs';
@@ -32,7 +32,7 @@ interface DecryptedWill extends SignedWill {
 }
 
 const ExecutorPage: React.FC = () => {
-  const { isConnected, signer } = useWallet();
+  const { isConnected, signer, address } = useWallet();
   const [currentStep, setCurrentStep] = useState(1);
   const [cid, setCid] = useState('');
   const [keyInput, setKeyInput] = useState('');
@@ -43,10 +43,13 @@ const ExecutorPage: React.FC = () => {
   const [proof, setProof] = useState<any>(null);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('');
-  const [transactionRecords, setTransactionRecords] = useState<{
-    createWillTx?: string;
-    transferTx?: string;
-    willAddress?: string;
+  const [willAddress, setWillAddress] = useState<string | null>(null);
+  const [createWillTx, setCreateWillTx] = useState<string | null>(null);
+  const [transferTx, setTransferTx] = useState<string | null>(null);
+  const [cidStatus, setCidStatus] = useState<{
+    isUploaded: boolean;
+    isNotarized: boolean;
+    isProbated: boolean;
   } | null>(null);
 
   const handleDownload = async (e: React.FormEvent) => {
@@ -193,17 +196,66 @@ const ExecutorPage: React.FC = () => {
     setProof(null);
     setStatus('');
     setError(null);
-    setTransactionRecords(null);
+    setWillAddress(null);
+    setCreateWillTx(null);
+    setTransferTx(null);
+    setCidStatus(null);
   };
 
-  const handleExecute = async () => {
+  const handleCreateWill = async () => {
     if (!proof || !decryptedWill || !signer || !encryptedWill) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      // Step 1: Create Will contract
+      // Check CID status first
+      setStatus('Checking CID status...');
+      console.log('Checking CID status for:', cid);
+
+      const status = await getCidStatus(signer, cid);
+      setCidStatus({
+        isUploaded: status.isUploaded,
+        isNotarized: status.isNotarized,
+        isProbated: status.isProbated,
+      });
+
+      if (!status.isUploaded) {
+        setError(
+          'CID has not been uploaded yet.\n\n' +
+          'Please ensure the Testator has completed the upload process with witnesses.'
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      if (!status.isNotarized) {
+        setError(
+          'CID has not been notarized yet.\n\n' +
+          'Required steps:\n' +
+          '1. Go to the Notary page\n' +
+          '2. Enter this CID and submit witness signatures\n' +
+          '3. Return to this page and try again'
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      if (!status.isProbated) {
+        setError(
+          'CID has not been probated yet.\n\n' +
+          'Required steps:\n' +
+          '1. Go to the Oracle page\n' +
+          '2. Enter this CID and probate it\n' +
+          '3. Return to this page and try again'
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('✓ CID status check passed - ready to create Will');
+
+      // Create Will contract
       setStatus('Creating Will contract...');
       console.log('Creating Will contract...');
       console.log('Will data:', decryptedWill);
@@ -221,11 +273,40 @@ const ExecutorPage: React.FC = () => {
         formattedProof,
         willObject
       );
-  
-      console.log('Will contract created!', createReceipt);
-      const willAddress = decryptedWill.will; // This is the predicted Will address
 
-      // Step 2: Execute signature transfer to beneficiaries
+      console.log('Will contract created!', createReceipt);
+      const createdWillAddress = decryptedWill.will; // This is the predicted Will address
+
+      setWillAddress(createdWillAddress);
+      setCreateWillTx(createReceipt.hash);
+      setStatus('Will contract created successfully!');
+      setCurrentStep(5); // Move to execute transfer step
+    } catch (err) {
+      console.error('Create Will failed:', err);
+      setError(err instanceof Error ? err.message : 'Create Will failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExecuteTransfer = async () => {
+    if (!decryptedWill || !signer || !willAddress) return;
+
+    // Check if current user is the executor
+    if (address?.toLowerCase() !== decryptedWill.executor.toLowerCase()) {
+      setError(
+        `You are not the executor of this will.\n\n` +
+        `Current wallet: ${address}\n` +
+        `Expected executor: ${decryptedWill.executor}\n\n` +
+        `Please switch to the executor wallet and try again.`
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
       setStatus('Executing transfers to beneficiaries...');
       console.log('Executing transfers...');
 
@@ -239,18 +320,12 @@ const ExecutorPage: React.FC = () => {
 
       console.log('Transfers completed!', transferReceipt);
 
-      // Save transaction records
-      setTransactionRecords({
-        createWillTx: createReceipt.hash,
-        transferTx: transferReceipt.hash,
-        willAddress: willAddress
-      });
-
-      setStatus('Will executed successfully!');
-      setCurrentStep(5); // Move to success display step
+      setTransferTx(transferReceipt.hash);
+      setStatus('Transfers executed successfully!');
+      setCurrentStep(6); // Move to success display step
     } catch (err) {
-      console.error('Execution failed:', err);
-      setError(err instanceof Error ? err.message : 'Execution failed');
+      console.error('Transfer execution failed:', err);
+      setError(err instanceof Error ? err.message : 'Transfer execution failed');
     } finally {
       setIsLoading(false);
     }
@@ -271,7 +346,7 @@ const ExecutorPage: React.FC = () => {
     <div className="executor-page">
       <div className="page-header">
         <h1>Executor Dashboard</h1>
-        <p>Download, decrypt, and execute probated wills</p>
+        <p>Download, decrypt, create, and execute will</p>
       </div>
 
       <div className="steps-indicator">
@@ -287,9 +362,13 @@ const ExecutorPage: React.FC = () => {
           <div className="step-number">3</div>
           <div className="step-label">Generate Proof</div>
         </div>
-        <div className={`step ${currentStep >= 4 ? 'active' : ''} ${currentStep >= 5 ? 'completed' : ''}`}>
+        <div className={`step ${currentStep >= 4 ? 'active' : ''} ${currentStep > 4 ? 'completed' : ''}`}>
           <div className="step-number">4</div>
-          <div className="step-label">Execute</div>
+          <div className="step-label">Create Will</div>
+        </div>
+        <div className={`step ${currentStep >= 5 ? 'active' : ''} ${currentStep > 5 ? 'completed' : ''}`}>
+          <div className="step-number">5</div>
+          <div className="step-label">Execute Transfer</div>
         </div>
       </div>
 
@@ -364,9 +443,115 @@ const ExecutorPage: React.FC = () => {
           </div>
         )}
 
-        {currentStep === 2 && (
+        {currentStep === 2 && encryptedWill && (
           <div>
             <h2>Decrypt Will</h2>
+
+            {/* Display Downloaded Encrypted Data */}
+            <div style={{
+              background: '#0f011ef8',
+              padding: '15px',
+              marginBottom: '20px',
+              borderRadius: '5px',
+              fontFamily: 'monospace',
+              fontSize: '12px',
+              color: 'rgba(255, 255, 255, 0.9)'
+            }}>
+              <h4 style={{ marginTop: 0, marginBottom: '15px', color: 'rgba(255, 255, 255, 0.95)' }}>
+                Downloaded Encrypted Data
+              </h4>
+
+              <div style={{ marginBottom: '10px' }}>
+                <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>CID:</strong>
+                <div style={{
+                  background: 'white',
+                  color: '#000',
+                  padding: '8px',
+                  marginTop: '5px',
+                  borderRadius: '3px',
+                  wordBreak: 'break-all'
+                }}>
+                  {cid}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '10px' }}>
+                <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Algorithm:</strong>
+                <div style={{
+                  background: 'white',
+                  color: '#000',
+                  padding: '8px',
+                  marginTop: '5px',
+                  borderRadius: '3px',
+                  wordBreak: 'break-all'
+                }}>
+                  {encryptedWill.algorithm}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '10px' }}>
+                <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>IV:</strong>
+                <div style={{
+                  background: 'white',
+                  color: '#000',
+                  padding: '8px',
+                  marginTop: '5px',
+                  borderRadius: '3px',
+                  wordBreak: 'break-all',
+                  overflowX: 'auto',
+                  whiteSpace: 'nowrap'
+                }}>
+                  [{encryptedWill.iv.join(', ')}]
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '10px' }}>
+                <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Auth Tag:</strong>
+                <div style={{
+                  background: 'white',
+                  color: '#000',
+                  padding: '8px',
+                  marginTop: '5px',
+                  borderRadius: '3px',
+                  wordBreak: 'break-all',
+                  overflowX: 'auto',
+                  whiteSpace: 'nowrap'
+                }}>
+                  [{encryptedWill.authTag.join(', ')}]
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '10px' }}>
+                <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Ciphertext:</strong>
+                <div style={{
+                  background: 'white',
+                  color: '#000',
+                  padding: '8px',
+                  marginTop: '5px',
+                  borderRadius: '3px',
+                  wordBreak: 'break-all',
+                  overflowX: 'auto',
+                  whiteSpace: 'nowrap'
+                }}>
+                  [{encryptedWill.ciphertext.join(', ')}]
+                </div>
+              </div>
+
+              <div>
+                <strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>Encryption Timestamp:</strong>
+                <div style={{
+                  background: 'white',
+                  color: '#000',
+                  padding: '8px',
+                  marginTop: '5px',
+                  borderRadius: '3px',
+                  wordBreak: 'break-all'
+                }}>
+                  {encryptedWill.timestamp} ({new Date(encryptedWill.timestamp * 1000).toLocaleString('en-US')})
+                </div>
+              </div>
+            </div>
+
             <form onSubmit={handleDecrypt} className="decrypt-form">
               <div className="form-group">
                 <label>Enter Decryption Key (hex)</label>
@@ -502,18 +687,65 @@ const ExecutorPage: React.FC = () => {
 
         {currentStep === 4 && proof && (
           <div>
-            <h2>Execute Will</h2>
+            <h2>Create Will Contract</h2>
             <div className="success">✓ Proof generated successfully!</div>
-            <p>Ready to create Will contract and execute transfers.</p>
+            <p>Ready to create Will contract on the blockchain.</p>
+
+            {/* CID Status Indicator */}
+            {cidStatus && (
+              <div style={{
+                background: 'rgba(100, 108, 255, 0.1)',
+                border: '1px solid rgba(100, 108, 255, 0.3)',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1rem'
+              }}>
+                <h4 style={{ marginTop: 0, marginBottom: '0.75rem', color: 'rgba(255, 255, 255, 0.9)' }}>
+                  CID Workflow Status
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: cidStatus.isUploaded ? 'var(--success-color)' : 'var(--error-color)' }}>
+                      {cidStatus.isUploaded ? '✓' : '✗'}
+                    </span>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                      Uploaded by Testator
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: cidStatus.isNotarized ? 'var(--success-color)' : 'var(--error-color)' }}>
+                      {cidStatus.isNotarized ? '✓' : '✗'}
+                    </span>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                      Notarized by Notary
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: cidStatus.isProbated ? 'var(--success-color)' : 'var(--error-color)' }}>
+                      {cidStatus.isProbated ? '✓' : '✗'}
+                    </span>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                      Probated by Oracle
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {decryptedWill && (
               <div className="execution-summary">
-                <h3>Execution Summary:</h3>
+                <h3>Will Contract Details:</h3>
                 <div>
-                  <strong>Step 1:</strong> Create Will contract at address {decryptedWill.will}
+                  <strong>Will Address:</strong> {decryptedWill.will}
                 </div>
                 <div>
-                  <strong>Step 2:</strong> Transfer assets to {decryptedWill.estates.length} beneficiar{decryptedWill.estates.length > 1 ? 'ies' : 'y'}
+                  <strong>Testator:</strong> {decryptedWill.testator}
+                </div>
+                <div>
+                  <strong>Executor:</strong> {decryptedWill.executor}
+                </div>
+                <div>
+                  <strong>Beneficiaries:</strong> {decryptedWill.estates.length}
                 </div>
               </div>
             )}
@@ -524,13 +756,122 @@ const ExecutorPage: React.FC = () => {
               </div>
             )}
 
-            <button onClick={handleExecute} disabled={isLoading} className="btn-execute">
-              {isLoading ? `Executing... (${status})` : 'Execute Will & Transfer Assets'}
+            <button onClick={handleCreateWill} disabled={isLoading} className="btn-primary">
+              {isLoading ? `Creating... (${status})` : 'Create Will Contract'}
             </button>
           </div>
         )}
 
-        {currentStep === 5 && transactionRecords && decryptedWill && (
+        {currentStep === 5 && willAddress && decryptedWill && (
+          <div>
+            <h2>Execute Transfer</h2>
+            <div className="success">✓ Will contract created successfully!</div>
+            <p>Now execute the asset transfers to beneficiaries.</p>
+
+            <div style={{
+              background: 'rgba(76, 175, 80, 0.1)',
+              border: '1px solid var(--success-color)',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <h4 style={{ marginTop: 0, marginBottom: '0.75rem', color: 'var(--success-color)' }}>
+                Will Contract Created
+              </h4>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <strong>Contract Address:</strong>
+                <div style={{
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                  fontSize: '0.9rem',
+                  wordBreak: 'break-all',
+                  marginTop: '0.25rem'
+                }}>
+                  {willAddress}
+                </div>
+              </div>
+              <div>
+                <strong>Transaction:</strong>
+                <div style={{
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  fontFamily: 'monospace',
+                  fontSize: '0.9rem',
+                  wordBreak: 'break-all',
+                  marginTop: '0.25rem'
+                }}>
+                  {createWillTx}
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              background: 'rgba(255, 152, 0, 0.1)',
+              border: '1px solid rgba(255, 152, 0, 0.5)',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginBottom: '1rem'
+            }}>
+              <h4 style={{ marginTop: 0, marginBottom: '0.75rem', color: 'rgba(255, 152, 0, 0.9)' }}>
+                ⚠️ Important: Executor Wallet Required
+              </h4>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <strong>Current Wallet:</strong> {address}
+              </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <strong>Required Executor:</strong> {decryptedWill.executor}
+              </div>
+              {address?.toLowerCase() !== decryptedWill.executor.toLowerCase() && (
+                <p style={{ color: 'rgba(255, 152, 0, 0.9)', margin: '0.5rem 0 0 0' }}>
+                  ❌ Please switch to the executor wallet to proceed with the transfer.
+                </p>
+              )}
+              {address?.toLowerCase() === decryptedWill.executor.toLowerCase() && (
+                <p style={{ color: 'var(--success-color)', margin: '0.5rem 0 0 0' }}>
+                  ✓ Correct executor wallet connected.
+                </p>
+              )}
+            </div>
+
+            {decryptedWill && (
+              <div className="execution-summary">
+                <h3>Transfer Summary:</h3>
+                {decryptedWill.estates.map((estate, idx) => (
+                  <div key={idx} style={{
+                    padding: '0.75rem',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '6px',
+                    marginBottom: '0.5rem',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}>
+                    <div><strong>Beneficiary:</strong> {estate.beneficiary}</div>
+                    <div><strong>Token:</strong> {estate.token}</div>
+                    <div><strong>Amount:</strong> {estate.amount}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {status && (
+              <div className="status-info">
+                <p>{status}</p>
+              </div>
+            )}
+
+            <button
+              onClick={handleExecuteTransfer}
+              disabled={isLoading || address?.toLowerCase() !== decryptedWill.executor.toLowerCase()}
+              className="btn-execute"
+            >
+              {isLoading ? `Executing... (${status})` : 'Execute Transfer to Beneficiaries'}
+            </button>
+          </div>
+        )}
+
+        {currentStep === 6 && transferTx && decryptedWill && (
           <div className="success-container" style={{
             background: 'rgba(76, 175, 80, 0.1)',
             border: '2px solid var(--success-color)',
@@ -577,7 +918,7 @@ const ExecutorPage: React.FC = () => {
                   color: 'var(--success-color)',
                   fontSize: '0.9rem'
                 }}>
-                  {transactionRecords.willAddress}
+                  {willAddress}
                 </code>
               </div>
 
@@ -600,7 +941,7 @@ const ExecutorPage: React.FC = () => {
                   color: 'rgba(255, 255, 255, 0.9)',
                   fontSize: '0.85rem'
                 }}>
-                  {transactionRecords.createWillTx}
+                  {createWillTx}
                 </code>
               </div>
 
@@ -623,7 +964,7 @@ const ExecutorPage: React.FC = () => {
                   color: 'rgba(255, 255, 255, 0.9)',
                   fontSize: '0.85rem'
                 }}>
-                  {transactionRecords.transferTx}
+                  {transferTx}
                 </code>
               </div>
             </div>
