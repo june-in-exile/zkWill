@@ -125,8 +125,8 @@ contract WillFactoryIntegrationTest is TestHelpers {
         TestVector memory tv = testVectors[0];
 
         // Step 1: Upload CID
-        // vm.expectEmit(true, false, false, true);
-        // emit WillFactory.CidUploaded(tv.cid, block.timestamp);
+        vm.expectEmit(true, false, false, true);
+        emit WillFactory.CidUploaded(tv.cid, block.timestamp);
 
         vm.prank(tv.testator);
         willFactory.uploadCid(
@@ -139,84 +139,84 @@ contract WillFactoryIntegrationTest is TestHelpers {
             witnesses
         );
 
-        // // Verify upload
-        // uint256 uploadTime = willFactory.cidUploadedTimes(tv.cid);
-        // assertEq(uploadTime, block.timestamp);
+        // Verify upload
+        uint256 uploadTime = willFactory.cidUploadedTimes(tv.cid);
+        assertEq(uploadTime, block.timestamp);
 
-        // // Step 2: Notarize CID
-        // vm.warp(block.timestamp + 1);
+        // Step 2: Notarize CID
+        vm.warp(block.timestamp + 1);
 
-        // vm.expectRevert(abi.encodeWithSelector(WillFactory.NotNotary.selector, random, notary));
-        // vm.prank(random);
-        // willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
+        vm.expectRevert(abi.encodeWithSelector(WillFactory.NotNotary.selector, random, notary));
+        vm.prank(random);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
-        // vm.expectEmit(true, false, false, true);
-        // emit WillFactory.CidNotarized(tv.cid, block.timestamp);
+        vm.expectEmit(true, false, false, true);
+        emit WillFactory.CidNotarized(tv.cid, block.timestamp);
 
-        // vm.prank(notary);
-        // willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
+        vm.prank(notary);
+        willFactory.notarizeCid(tv.cid, _getWitnessSignatures(tv.cid));
 
-        // // Verify notarization
-        // uint256 notarizeTime = willFactory.cidNotarizedTimes(tv.cid);
-        // assertEq(notarizeTime, block.timestamp);
-        // assertTrue(notarizeTime > uploadTime);
+        // Verify notarization
+        uint256 notarizeTime = willFactory.cidNotarizedTimes(tv.cid);
+        assertEq(notarizeTime, block.timestamp);
+        assertTrue(notarizeTime > uploadTime);
 
-        // // Step 3: Probate Will
-        // vm.warp(block.timestamp + 1);
+        // Step 3: Probate Will
+        vm.warp(block.timestamp + 1);
 
-        // vm.expectRevert(abi.encodeWithSelector(WillFactory.NotOracle.selector, random, oracle));
-        // vm.prank(random);
-        // willFactory.probateCid(tv.cid);
+        vm.expectRevert(abi.encodeWithSelector(WillFactory.NotOracle.selector, random, oracle));
+        vm.prank(random);
+        willFactory.probateCid(tv.cid);
 
-        // vm.expectEmit(true, false, false, true);
-        // emit WillFactory.CidProbated(tv.cid, block.timestamp);
+        vm.expectEmit(true, false, false, true);
+        emit WillFactory.CidProbated(tv.cid, block.timestamp);
 
-        // vm.prank(oracle);
-        // willFactory.probateCid(tv.cid);
+        vm.prank(oracle);
+        willFactory.probateCid(tv.cid);
 
-        // // Verify probation
-        // uint256 probateTime = willFactory.cidProbatedTimes(tv.cid);
-        // assertEq(probateTime, block.timestamp);
-        // assertTrue(probateTime > notarizeTime);
+        // Verify probation
+        uint256 probateTime = willFactory.cidProbatedTimes(tv.cid);
+        assertEq(probateTime, block.timestamp);
+        assertTrue(probateTime > notarizeTime);
 
-        // // Step 4: Create Will
-        // address predictedAddress = willFactory.predictWill(tv.testator, tv.executor, tv.estates, tv.salt);
+        // Step 4: Create Will
+        address predictedAddress = willFactory.predictWill(tv.testator, tv.executor, tv.estates, tv.salt);
 
-        // vm.expectRevert(abi.encodeWithSelector(WillFactory.NotExecutor.selector, random, tv.executor));
-        // vm.prank(random);
-        // willFactory.createWill(
-        //     tv.willCreationProof.pA,
-        //     tv.willCreationProof.pB,
-        //     tv.willCreationProof.pC,
-        //     tv.willCreationProof.pubSignals,
-        //     tv.willTypedJsonObj,
-        //     tv.cid
-        // );
+        vm.expectRevert(abi.encodeWithSelector(WillFactory.NotExecutor.selector, random, tv.executor));
+        vm.prank(random);
+        willFactory.createWill(
+            tv.willCreationProof.pA,
+            tv.willCreationProof.pB,
+            tv.willCreationProof.pC,
+            tv.willCreationProof.pubSignals,
+            tv.willTypedJsonObj,
+            tv.cid
+        );
 
-        // vm.expectEmit(true, true, false, true);
-        // emit WillFactory.WillCreated(tv.cid, tv.testator, predictedAddress);
+        vm.expectEmit(true, true, false, true);
+        emit WillFactory.WillCreated(tv.cid, tv.testator, predictedAddress);
 
-        // vm.prank(tv.executor);
-        // address willAddress = willFactory.createWill(
-        //     tv.willCreationProof.pA,
-        //     tv.willCreationProof.pB,
-        //     tv.willCreationProof.pC,
-        //     tv.willCreationProof.pubSignals,
-        //     tv.willTypedJsonObj,
-        //     tv.cid
-        // );
+        vm.prank(tv.executor);
+        address willAddress = willFactory.createWill(
+            tv.willCreationProof.pA,
+            tv.willCreationProof.pB,
+            tv.willCreationProof.pC,
+            tv.willCreationProof.pubSignals,
+            tv.willTypedJsonObj,
+            tv.cid
+        );
 
-        // // Verify will creation
-        // assertEq(willFactory.wills(tv.cid), willAddress);
-        // assertEq(willAddress, predictedAddress);
+        // Verify will creation
+        assertEq(willFactory.wills(tv.cid), willAddress);
+        assertEq(willAddress, predictedAddress);
 
-        // // Verify will contract exists and has correct properties
-        // Will will = Will(willAddress);
-        // assertEq(address(will.permit2()), permit2);
-        // assertEq(will.testator(), tv.testator);
-        // assertEq(will.executor(), tv.executor);
+        // Verify will contract exists and has correct properties
+        Will will = Will(willAddress);
+        assertEq(address(will.permit2()), permit2);
+        assertEq(will.testator(), tv.testator);
+        assertEq(will.executor(), tv.executor);
 
-        // assertTrue(_compareEstateArraysHash(will.getAllEstates(), tv.estates));
+        assertTrue(_compareEstateArraysHash(will.getAllEstates(), tv.estates));
     }
 
     function test_WorkflowWithTimingConstraints() public {

@@ -165,36 +165,54 @@ TESTATOR_PRIVATE_KEY=YOUR_TESTATOR_PRIVATE_KEY_WITHOUT_0X
 
 The other fields would be automatically updated during the execution.
 
-## 🏗️ System Architecture
+## 🛠️ Tech Stack
 
-### Frontend (React + Vite)
+### Frontend
 
-- **Framework**: React 19 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: CSS Modules
-- **State Management**: React Hooks
-- **Web3 Integration**: ethers.js + Permit2 SDK
+- **React** - UI framework
+- **Vite** - Fast build tool
+- **TypeScript** - Type-safe language
+- **ethers.js** - Ethereum interaction library
+- **Helia** - IPFS protocol implementation
+- **React Router** - Client-side routing
 
-### Backend (Node.js + Express)
+### Smart Contracts
 
-- **Runtime**: Node.js (ESM)
-- **Framework**: Express
-- **Language**: TypeScript
-- **Encryption**: Symmetric encryption + Zero-knowledge proofs
-- **Storage**: IPFS (Helia local node)
+- **Foundry** - Solidity development framework
+- **Solidity** - Smart contract language
+- **OpenZeppelin** - Standard contract library
+- **Permit2** - Off-chain authorization protocol
 
-### Smart Contracts (Solidity + Foundry)
+### Zero-Knowledge Proofs
 
-- **Development Framework**: Foundry
-- **Testing**: Forge
-- **Deployment**: Forge Script
-- **Features**: CREATE2, Permit2 integration
+- **Circom** - ZKP circuit language
+- **snarkjs** - Proof generation and verification
+- **circom_tester** - Circuit testing tool
+- **Keccak256** - Hash function implementation
 
-### Zero-Knowledge Proofs (Circom)
+### Backend
 
-- **Circuit Language**: Circom
-- **Proving System**: Groth16
-- **Purpose**: Private content verification and format validation
+- **Express** - Node.js web framework
+- **cors** - Cross-origin request handling
+- **dotenv** - Environment variable management
+
+### Cryptography
+
+- **AES-256-GCM** - Symmetric encryption algorithm
+- **ECDSA** - Elliptic curve signatures
+- **CREATE2** - Deterministic contract deployment
+
+### Development Tools
+
+- **pnpm** - Efficient package manager
+- **TypeChain** - Contract type generation
+- **ESLint** - Code linting
+- **Vitest** - Testing framework
+- **Anvil** - Local blockchain
+
+### Deployment Network
+
+- **Arbitrum Sepolia** - Testnet environment
 
 ## 🚨 Troubleshooting
 
