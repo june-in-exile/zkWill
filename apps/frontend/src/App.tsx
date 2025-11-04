@@ -5,6 +5,7 @@ import TestatorPage from './pages/testator/TestatorPage';
 import NotaryPage from './pages/notary/NotaryPage';
 import OraclePage from './pages/oracle/OraclePage';
 import ExecutorPage from './pages/executor/ExecutorPage';
+import IpfsExplorerPage from './pages/IpfsExplorerPage';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/notary" element={<NotaryPage />} />
           <Route path="/oracle" element={<OraclePage />} />
           <Route path="/executor" element={<ExecutorPage />} />
+          <Route path="/ipfs-explorer" element={<IpfsExplorerPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

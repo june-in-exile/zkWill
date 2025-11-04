@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import WalletConnect from '../wallet/WalletConnect';
+import NavigationDropdown from './NavigationDropdown';
 import './Layout.css';
 
 interface LayoutProps {
@@ -12,27 +13,38 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Check if current page is part of zkWill System
+  const isZkWillSystemPage = () => {
+    const zkWillPaths = ['/', '/testator', '/notary', '/oracle', '/executor'];
+    return zkWillPaths.includes(location.pathname);
+  };
+
   return (
     <div className="layout">
       <nav className="navbar">
         <div className="nav-container">
-          <div className="nav-brand">
-            <Link to="/">ZK Will System</Link>
+          <div className="nav-left">
+            <NavigationDropdown />
+            <div className="nav-brand">
+              <Link to="/">ZK Will System</Link>
+            </div>
           </div>
-          <div className="nav-links">
-            <Link to="/testator" className={isActive('/testator') ? 'active' : ''}>
-              Testator
-            </Link>
-            <Link to="/notary" className={isActive('/notary') ? 'active' : ''}>
-              Notary
-            </Link>
-            <Link to="/oracle" className={isActive('/oracle') ? 'active' : ''}>
-              Oracle
-            </Link>
-            <Link to="/executor" className={isActive('/executor') ? 'active' : ''}>
-              Executor
-            </Link>
-          </div>
+          {isZkWillSystemPage() && (
+            <div className="nav-links">
+              <Link to="/testator" className={isActive('/testator') ? 'active' : ''}>
+                Testator
+              </Link>
+              <Link to="/notary" className={isActive('/notary') ? 'active' : ''}>
+                Notary
+              </Link>
+              <Link to="/oracle" className={isActive('/oracle') ? 'active' : ''}>
+                Oracle
+              </Link>
+              <Link to="/executor" className={isActive('/executor') ? 'active' : ''}>
+                Executor
+              </Link>
+            </div>
+          )}
           <WalletConnect />
         </div>
       </nav>
