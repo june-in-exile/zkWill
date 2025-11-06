@@ -21,7 +21,7 @@ The Testator begins by approving the maximum token allowance to the Permit2 cont
 
 Once the will is uploaded, the Notary calls the `notarizeCid` function in `WillFactory.sol` to notarize the corresponding CID. This ensures that the encrypted will has been verified and witnessed by a trusted party, establishing legal validity and preventing unauthorized uploads.
 
-### 3. Activation (Oracle)
+### 3. Probation (Oracle)
 
 Before the Testator's death, the encrypted will remains inaccessible and cannot be instantiated or executed. When the Oracle receives verifiable death confirmation data from an authoritative source (such as a government registry or medical attestation), it calls `WillFactory.sol` (e.g., `authorizeExecution`) to confirm that the Testator has passed away. This authorization enables the Executor to proceed with will creation and execution, ensuring that the process only begins under legitimate conditions.
 
@@ -148,17 +148,28 @@ Copy the `.env.example` file as `.env`:
 cp .env.example .env
 ```
 
-Fill in the fields required to interact with the contracts:
+Fill in the fields required to interact with the system:
 
 ```bash
 ARB_SEPOLIA_RPC_URL=https://arb-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
 ARBSCAN_API_KEY=YOUR_ARBSCAN_API_KEY
 
-EXECUTOR=0x_YOUR_EXECUTOR_ADDRESS
-EXECUTOR_PRIVATE_KEY=YOUR_EXECUTOR_PRIVATE_KEY_WITHOUT_0X
-
 TESTATOR=0x_YOUR_TESTATOR_ADDRESS
 TESTATOR_PRIVATE_KEY=YOUR_TESTATOR_PRIVATE_KEY_WITHOUT_0X
+
+WITNESS1=0x_YOUR_WITNESS1_ADDRESS
+WITNESS1_PRIVATE_KEY=YOUR_WITNESS1_PRIVATE_KEY_WITHOUT_0X
+WITNESS2=0x_YOUR_WITNESS2_ADDRESS
+WITNESS2_PRIVATE_KEY=YOUR_WITNESS2_PRIVATE_KEY_WITHOUT_0X
+
+NOTARY=0x_YOUR_NOTARY_ADDRESS
+NOTARY_PRIVATE_KEY=YOUR_NOTARY_PRIVATE_KEY_WITHOUT_0X
+
+ORACLE=0x_YOUR_ORACLE_ADDRESS
+ORACLE_PRIVATE_KEY=YOUR_ORACLE_PRIVATE_KEY_WITHOUT_0X
+
+EXECUTOR=0x_YOUR_EXECUTOR_ADDRESS
+EXECUTOR_PRIVATE_KEY=YOUR_EXECUTOR_PRIVATE_KEY_WITHOUT_0X
 ```
 
 **Note on IPFS**: This project uses a local Helia instance for IPFS storage. No external service configuration is required. Files are stored temporarily for demo purposes.
@@ -260,19 +271,3 @@ cd apps/backend && make clean
 pnpm install
 pnpm build
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 🙏 Acknowledgments
-
-- [Foundry](https://github.com/foundry-rs/foundry) - Smart contract development toolkit
-- [Circom](https://github.com/iden3/circom) - Zero-knowledge circuit compiler
-- [IPFS](https://ipfs.io/) - Decentralized storage
-- [Vite](https://vitejs.dev/) - Fast build tool
-- [Permit2](https://github.com/Uniswap/permit2) - Token approval system

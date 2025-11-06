@@ -126,8 +126,8 @@ async function processProbation(): Promise<ProcessResult> {
         );
 
         await updateEnvironmentVariables([
-            ["PROBATE_WILL_TX_HASH", result.transactionHash],
-            ["PROBATE_WILL_TIMESTAMP", result.timestamp.toString()],
+            ["PROBATE_TX_HASH", result.transactionHash],
+            ["PROBATE_TIMESTAMP", result.timestamp.toString()],
         ]);
 
         console.log(

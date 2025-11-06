@@ -1,5 +1,5 @@
 /**
- * Will contract interaction utilities
+ * Will contract
  */
 
 import { Contract } from 'ethers';

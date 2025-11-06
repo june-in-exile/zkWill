@@ -247,7 +247,7 @@ make probate-cid
 
 - **Required `.env` fields**: `ORACLE_PRIVATE_KEY`, `WILL_FACTORY`, `CID`
 - **Updates**: The following `.env` variables are automatically updated:
-  - `PROBATE_WILL_TX_HASH`, `PROBATE_WILL_TIMESTAMP`
+  - `PROBATE_TX_HASH`, `PROBATE_TIMESTAMP`
 
 ## Phase 4: Executor - Create Will & Transfer Estates
 

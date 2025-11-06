@@ -25,7 +25,7 @@
   },
   "cidUpload": {
     "UploadCid": {
-      "237-byte ciphertext": 0,
+      "237-byte ciphertext": 4007789,
       "293-byte ciphertext": 4604721
     }
   },
@@ -105,7 +105,7 @@
   "utf8": { "Utf8ByteLength": {}, "Utf8Encoder": {}, "Utf8StringEncoder": {} },
   "willCreation": {
     "createWill": {
-      "237-byte ciphertext": 0,
+      "237-byte ciphertext": 1805190,
       "293-byte ciphertext": 2286410
     }
   }

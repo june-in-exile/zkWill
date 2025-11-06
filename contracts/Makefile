@@ -53,10 +53,6 @@ clean-verifiers-and-proofs:
 	@rm -rf src/Multiplier2Verifier
 	@rm -rf src/CidUploadVerifier
 	@rm -rf src/WillCreationVerifier
-# 	@pnpm exec tsx ../shared/utils/file/resetEnvVariable.ts \
-		MULTIPLIER2_PA_ARRAY MULTIPLIER2_PB_ARRAY MULTIPLIER2_PC_ARRAY MULTIPLIER2_PUBSIGNALS_ARRAY \
-		CID_UPLOAD_PA_ARRAY CID_UPLOAD_PB_ARRAY CID_UPLOAD_PC_ARRAY CID_UPLOAD_PUBSIGNALS_ARRAY \
-		WILL_CREATION_PA_ARRAY WILL_CREATION_PB_ARRAY WILL_CREATION_PC_ARRAY WILL_CREATION_PUBSIGNALS_ARRAY
 
 clean-typechain:
 	@rm -rf ../shared/types/typechain-types
