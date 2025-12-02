@@ -2,6 +2,14 @@
 
 A blockchain-based inheritance management framework that leverages Permit2, CREATE2, Zero-Knowledge Proofs (ZKP), and IPFS to securely handle the creation, notarization, and execution of on-chain wills.
 
+## 📺 Demo Video
+
+Watch the system demonstration to see how zkWill works:
+
+[![zkWill Demo](https://img.youtube.com/vi/ePrYFanLwjQ/0.jpg)](https://youtu.be/ePrYFanLwjQ)
+
+[🎬 Click here to watch on YouTube](https://youtu.be/ePrYFanLwjQ)
+
 ## System Overview
 
 The system follows a multi-role collaboration model involving four key participants: Testator, Executor, Notary, and Oracle. Each role operates within a distinct stage of the process—creation, notarization, activation, and execution—ensuring that every step of the digital will lifecycle is verifiable, secure, and privacy-preserving.
@@ -257,6 +265,21 @@ cd contracts && forge clean && forge build
 # Check and update dependencies
 pnpm deps:check
 pnpm deps:update
+```
+
+5. **Environment switching issues**
+
+When switching between different environments (e.g., local Anvil network and Arbitrum Sepolia), remember to:
+
+- Update `USE_ANVIL` in your `.env` file to match the target environment (set to `true` for local network, `false` for testnet/mainnet)
+- If the `cidUpload` ZKP verification fails after switching environments, check that the `chainId` constant in `zkp/circuits/shared/components/permitVerify/permitVerify.circom` is set correctly for your target network:
+  - Anvil local network: `31337`
+  - Arbitrum Sepolia: `421614`
+
+After modifying the chainId, rebuild the ZKP circuits:
+
+```bash
+cd zkp && make clean && make
 ```
 
 ### Project Reset

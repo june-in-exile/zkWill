@@ -145,7 +145,7 @@ make predict-address
 Create the signature for [Permit2 SignatureTransfer function](https://docs.uniswap.org/contracts/permit2/reference/signature-transfer):
 
 ```sh
-make sign-permit
+make sign-permit2
 ```
 
 - **Output**: [`will/4_signed.json`](will/4_signed.json)
