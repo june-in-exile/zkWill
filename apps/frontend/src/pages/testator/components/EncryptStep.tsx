@@ -160,11 +160,6 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
       setProgress('Serializing and encrypting will via backend...');
       const encryptedResult = await encryptWillAPI(signedWill);
 
-      // Debug: Log encrypted result
-      const ciphertextBase64 = btoa(String.fromCharCode(...encryptedResult.ciphertext));
-      const ivBase64 = btoa(String.fromCharCode(...encryptedResult.iv));
-      const authTagBase64 = btoa(String.fromCharCode(...encryptedResult.authTag));
-
       // Step 7: Download encryption key for user
       setProgress('Downloading encryption key...');
       const keyHexForDownload = encryptedResult.key
@@ -246,9 +241,6 @@ const EncryptStep: React.FC<Props> = ({ willData, onEncrypted }) => {
             Generate Permit2 signature <strong>(requires wallet confirmation)</strong>
           </li>
           <li>Verify the signature from your wallet</li>
-          <li>
-            Compare with backend signature <strong>(using TESTATOR_PRIVATE_KEY)</strong>
-          </li>
           <li>Serialize all will data into binary format</li>
           <li>Encrypt the serialized data</li>
           <li>Download the encryption key to your computer</li>

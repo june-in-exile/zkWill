@@ -10,6 +10,7 @@
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
+    "@shared/types": "workspace:*",
     "@helia/json": "^4.0.7",
     "@uniswap/permit2-sdk": "^1.4.0",
     "ethers": "^6.15.0",

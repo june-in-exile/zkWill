@@ -82,18 +82,79 @@ brew install circom
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/june-in-exile/will.git
-cd will
+git clone https://github.com/june-in-exile/zkWill.git
+cd zkWill
 ```
 
-2. **Install dependencies & generate ZKP & build smart contracts**
+2. **Configure environment variables**
+
+Copy the `.env.example` file as `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Update the following environment variables in `.env`:
+
+```bash
+# Network configuration
+USE_ANVIL=false                                    # Set to false for Arbitrum Sepolia testnet
+ARB_SEPOLIA_RPC_URL=https://arb-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
+
+# Deployer configuration (for contract deployment)
+DEPLOYER_PRIVATE_KEY=YOUR_DEPLOYER_PRIVATE_KEY    # Private key with ETH on Arbitrum Sepolia
+ETHERSCAN_API_KEY=YOUR_ETHERSCAN_API_KEY           # For contract verification
+
+# Role addresses
+TESTATOR=0x_YOUR_TESTATOR_ADDRESS
+WITNESS1=0x_YOUR_WITNESS1_ADDRESS
+WITNESS2=0x_YOUR_WITNESS2_ADDRESS
+NOTARY=0x_YOUR_NOTARY_ADDRESS
+ORACLE=0x_YOUR_ORACLE_ADDRESS
+EXECUTOR=0x_YOUR_EXECUTOR_ADDRESS
+```
+
+**Important**: Ensure your deployer address has sufficient ETH on Arbitrum Sepolia for contract deployment gas fees.
+
+3. **Install dependencies**
 
 ```bash
 pnpm install
-pnpm build
 ```
 
-3. **Start development environment**
+4. **Compile ZKP circuits**
+
+Navigate to the ZKP directory and compile the required circuits:
+
+```bash
+cd zkp
+make circuit-no-proof CIRCUIT=cidUpload TEMPLATE=UploadCid
+make circuit-no-proof CIRCUIT=willCreation TEMPLATE=CreateWill
+cd ..
+```
+
+**Note**: This step compiles the ZKP circuits without generating proof files, which is sufficient for development.
+
+5. **Deploy smart contracts to Arbitrum Sepolia**
+
+Navigate to the contracts directory and deploy:
+
+```bash
+cd contracts
+make install build deploy
+cd ..
+```
+
+This will:
+- Install Foundry dependencies
+- Build and compile smart contracts
+- Generate TypeScript contract types
+- Deploy contracts to Arbitrum Sepolia testnet
+- Verify contracts on Arbiscan
+
+**Verify deployment**: After successful deployment, the contract addresses will be automatically updated in your `.env` file.
+
+6. **Start development environment**
 
 ```bash
 # Start both frontend and backend
@@ -145,44 +206,6 @@ pnpm deps:audit
 # Clean and reinstall dependencies
 pnpm deps:clean
 ```
-
-## 🔧 Project Configuration
-
-### Environment Variables
-
-Copy the `.env.example` file as `.env`:
-
-```bash
-cp .env.example .env
-```
-
-Fill in the fields required to interact with the system:
-
-```bash
-ARB_SEPOLIA_RPC_URL=https://arb-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
-ARBSCAN_API_KEY=YOUR_ARBSCAN_API_KEY
-
-TESTATOR=0x_YOUR_TESTATOR_ADDRESS
-TESTATOR_PRIVATE_KEY=YOUR_TESTATOR_PRIVATE_KEY_WITHOUT_0X
-
-WITNESS1=0x_YOUR_WITNESS1_ADDRESS
-WITNESS1_PRIVATE_KEY=YOUR_WITNESS1_PRIVATE_KEY_WITHOUT_0X
-WITNESS2=0x_YOUR_WITNESS2_ADDRESS
-WITNESS2_PRIVATE_KEY=YOUR_WITNESS2_PRIVATE_KEY_WITHOUT_0X
-
-NOTARY=0x_YOUR_NOTARY_ADDRESS
-NOTARY_PRIVATE_KEY=YOUR_NOTARY_PRIVATE_KEY_WITHOUT_0X
-
-ORACLE=0x_YOUR_ORACLE_ADDRESS
-ORACLE_PRIVATE_KEY=YOUR_ORACLE_PRIVATE_KEY_WITHOUT_0X
-
-EXECUTOR=0x_YOUR_EXECUTOR_ADDRESS
-EXECUTOR_PRIVATE_KEY=YOUR_EXECUTOR_PRIVATE_KEY_WITHOUT_0X
-```
-
-**Note on IPFS**: This project uses a local Helia instance for IPFS storage. No external service configuration is required. Files are stored temporarily for demo purposes.
-
-The other fields would be automatically updated during the execution.
 
 ## 🛠️ Tech Stack
 

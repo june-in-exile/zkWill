@@ -67,6 +67,8 @@ export default defineConfig({
     'import.meta.env.VITE_BACKEND_URL': JSON.stringify(`http://localhost:${rootEnv.BACKEND_PORT || '3001'}`),
     // Default will data from .env
     'import.meta.env.VITE_DEFAULT_EXECUTOR': JSON.stringify(rootEnv.EXECUTOR || ''),
+    'import.meta.env.VITE_DEFAULT_WITNESS1': JSON.stringify(rootEnv.WITNESS1 || ''),
+    'import.meta.env.VITE_DEFAULT_WITNESS2': JSON.stringify(rootEnv.WITNESS2 || ''),
     'import.meta.env.VITE_DEFAULT_BENEFICIARY0': JSON.stringify(rootEnv.BENEFICIARY0 || ''),
     'import.meta.env.VITE_DEFAULT_TOKEN0': JSON.stringify(rootEnv.TOKEN0 || ''),
     'import.meta.env.VITE_DEFAULT_AMOUNT0': JSON.stringify(rootEnv.AMOUNT0 || ''),

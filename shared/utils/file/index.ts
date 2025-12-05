@@ -5,5 +5,5 @@ export * from "./saveWill.js";
 export * from "./serialization.js";
 export * from "./syncAddress.js";
 export * from "./syncAnvil.js";
-export * from "./syncZkp.js";
+export * from "./syncVerifier.js";
 export * from "./updateEnvVariable.js";

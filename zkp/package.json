@@ -14,6 +14,7 @@
     "test:permitVerify": "pnpm exec tsx ./tests/logic/modules/permitVerify.ts",
     "test:modules": "pnpm exec tsx ./tests/logic/modules/runTests.ts",
     "test:all": "pnpm test:modules && pnpm test:auto --reporter=basic",
+    "build": "make circuit-no-proof CIRCUIT=cidUpload TEMPLATE=UploadCid && make circuit-no-proof CIRCUIT=willCreation TEMPLATE=CreateWill",
     "e2e": "make circuit CIRCUIT=multiplier2 TEMPLATE=Multiplier2",
     "lint": "eslint '**/*.ts'",
     "format": "prettier --write '**/*.ts'",

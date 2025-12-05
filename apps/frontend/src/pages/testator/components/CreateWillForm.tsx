@@ -9,8 +9,8 @@ interface Props {
 const CreateWillForm: React.FC<Props> = ({ testatorAddress, onSubmit }) => {
   // Load default values from environment
   const defaultExecutor = import.meta.env.VITE_DEFAULT_EXECUTOR || '';
-  const defaultWitness1 = import.meta.env.VITE_WITNESS1 || '';
-  const defaultWitness2 = import.meta.env.VITE_WITNESS2 || '';
+  const defaultWitness1 = import.meta.env.VITE_DEFAULT_WITNESS1 || '';
+  const defaultWitness2 = import.meta.env.VITE_DEFAULT_WITNESS2 || '';
   const defaultEstates: Array<{ beneficiary: string; token: string; amount: string }> = [];
 
   // Add first estate if available

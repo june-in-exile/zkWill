@@ -3,11 +3,9 @@ include $(ENV_FILE)
 export
 
 .PHONY: split-multiplier2Verifier split-cidUploadVerifier split-willCreationVerifier split-verifiers \
-		sync-anvil sync-zkp sync clean-address clean-verifiers-and-proofs clean-typechain clean \
+		sync-anvil sync-verifier sync clean-address clean-verifiers-and-proofs clean-typechain clean \
 		install build test test-fuzz test-integration test-unit deploy \
 	 	format typechain fork-clean fork fork-background
-	 
-MY_PRIVATE_KEY := $(EXECUTOR_PRIVATE_KEY)
 
 ESTATES := "[($(BENEFICIARY0),$(TOKEN0),$(AMOUNT0)),($(BENEFICIARY1),$(TOKEN1),$(AMOUNT1))]"
 
@@ -38,11 +36,11 @@ split-verifiers: split-multiplier2Verifier split-cidUploadVerifier split-willCre
 sync-anvil:
 	@pnpm exec tsx ../shared/utils/file/syncAnvil.ts
 
-sync-zkp:
-	@pnpm exec tsx ../shared/utils/file/syncZkp.ts
+sync-verifier:
+	@pnpm exec tsx ../shared/utils/file/syncVerifier.ts
 	@$(MAKE) split-verifiers
 
-sync: sync-anvil sync-zkp
+sync: sync-anvil sync-verifier
 
 # ---------------- Clean Commands -----------------------
 
@@ -81,16 +79,16 @@ build: sync
 typechain: 
 	@pnpm exec typechain --target ethers-v6 --out-dir ../shared/types/typechain-types 'out/**/*.sol/*.json'
 
-test-fuzz: sync-zkp
+test-fuzz: sync-verifier
 	@pnpm test "test/fuzz/*"
 
-test-integration: sync-zkp
+test-integration: sync-verifier
 	@pnpm test "test/integration/*"
 
-test-unit: sync-zkp
+test-unit: sync-verifier
 	@pnpm test "test/unit/*"
 
-test: sync-zkp
+test: sync-verifier
 	@pnpm test
 
 # --------------- Conditional Deployment ----------------
@@ -150,8 +148,8 @@ deploy-multiplier2verifier-to-arb-sepolia:
 		--broadcast \
 		--verify \
 		--rpc-url $(ARB_SEPOLIA_RPC_URL) \
-		--etherscan-api-key $(ARBSCAN_API_KEY) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--etherscan-api-key $(ETHSCAN_API_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/Multiplier2Verifier.s.sol:Multiplier2VerifierScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts MULTIPLIER2_VERIFIER Multiplier2Verifier $(CHAIN_ID)
 
@@ -160,8 +158,8 @@ deploy-cidUploadVerifier-to-arb-sepolia:
 		--broadcast \
 		--verify \
 		--rpc-url $(ARB_SEPOLIA_RPC_URL) \
-		--etherscan-api-key $(ARBSCAN_API_KEY) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--etherscan-api-key $(ETHSCAN_API_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/CidUploadVerifier.s.sol:CidUploadVerifierScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts CID_UPLOAD_VERIFIER CidUploadVerifier $(CHAIN_ID)
 
@@ -170,8 +168,8 @@ deploy-willCreationVerifier-to-arb-sepolia:
 		--broadcast \
 		--verify \
 		--rpc-url $(ARB_SEPOLIA_RPC_URL) \
-		--etherscan-api-key $(ARBSCAN_API_KEY) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--etherscan-api-key $(ETHSCAN_API_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/WillCreationVerifier.s.sol:WillCreationVerifierScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts WILL_CREATION_VERIFIER WillCreationVerifier $(CHAIN_ID)
 
@@ -180,8 +178,8 @@ deploy-jsonCidVerifier-to-arb-sepolia:
 		--broadcast \
 		--verify \
 		--rpc-url $(ARB_SEPOLIA_RPC_URL) \
-		--etherscan-api-key $(ARBSCAN_API_KEY) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--etherscan-api-key $(ETHSCAN_API_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/JsonCidVerifier.s.sol:JsonCidVerifierScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts JSON_CID_VERIFIER JsonCidVerifier $(CHAIN_ID)
 
@@ -190,8 +188,8 @@ deploy-willFactory-to-arb-sepolia:
 		--broadcast \
 		--verify \
 		--rpc-url $(ARB_SEPOLIA_RPC_URL) \
-		--etherscan-api-key $(ARBSCAN_API_KEY) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--etherscan-api-key $(ETHSCAN_API_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/WillFactory.s.sol:WillFactoryScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts WILL_FACTORY WillFactory $(CHAIN_ID)
 
@@ -214,7 +212,7 @@ deploy-multiplier2verifier-to-forked-arb-sepolia:
 	@forge script \
 		--broadcast \
 		--fork-url $(ANVIL_RPC_URL) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/Multiplier2Verifier.s.sol:Multiplier2VerifierScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts MULTIPLIER2_VERIFIER Multiplier2Verifier $(CHAIN_ID)
 
@@ -222,7 +220,7 @@ deploy-cidUploadVerifier-to-forked-arb-sepolia:
 	@forge script \
 		--broadcast \
 		--fork-url $(ANVIL_RPC_URL) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/CidUploadVerifier.s.sol:CidUploadVerifierScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts CID_UPLOAD_VERIFIER CidUploadVerifier $(CHAIN_ID)
 
@@ -230,7 +228,7 @@ deploy-willCreationVerifier-to-forked-arb-sepolia:
 	forge script \
 		--broadcast \
 		--fork-url $(ANVIL_RPC_URL) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/WillCreationVerifier.s.sol:WillCreationVerifierScript
 	pnpm exec tsx ../shared/utils/file/syncAddress.ts WILL_CREATION_VERIFIER WillCreationVerifier $(CHAIN_ID)
 
@@ -238,7 +236,7 @@ deploy-jsonCidVerifier-to-forked-arb-sepolia:
 	@forge script \
 	 	--broadcast \
 		--fork-url $(ANVIL_RPC_URL) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/JsonCidVerifier.s.sol:JsonCidVerifierScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts JSON_CID_VERIFIER JsonCidVerifier $(CHAIN_ID)
 
@@ -246,7 +244,7 @@ deploy-willFactory-to-forked-arb-sepolia:
 	@forge script \
 		--broadcast \
 		--fork-url $(ANVIL_RPC_URL) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/WillFactory.s.sol:WillFactoryScript
 	@pnpm exec tsx ../shared/utils/file/syncAddress.ts WILL_FACTORY WillFactory $(CHAIN_ID)
 
@@ -328,7 +326,7 @@ verify-will:
 			"$(EXECUTOR)" \
 			$(ESTATES)) \
 		--verifier etherscan \
-		--etherscan-api-key ${ARBSCAN_API_KEY} \
+		--etherscan-api-key ${ETHSCAN_API_KEY} \
 		--watch \
 		$(WILL) \
 		src/Will.sol:Will
@@ -451,7 +449,7 @@ deploy-debugger-to-forked-arb-sepolia:
 	forge script \
 		--broadcast \
 		--fork-url $(ANVIL_RPC_URL) \
-		--private-key $(MY_PRIVATE_KEY) \
+		--private-key $(DEPLOYER_PRIVATE_KEY) \
 		script/PermitVerifier.s.sol:PermitVerifierScript
 
 TOKEN_PERMISSIONS_TYPEHASH:
