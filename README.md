@@ -135,6 +135,10 @@ cd ..
 
 **Note**: This step compiles the ZKP circuits without generating proof files, which is sufficient for development.
 
+**Trusted Setup**: The ZKP circuits use a trusted setup ceremony for secure proof generation:
+- **Phase 1**: Uses the PSE [perpetualpowersoftau](https://github.com/privacy-ethereum/perpetualpowersoftau) Powers of Tau (PTAU) file with degree 23: [ppot_0080_23.ptau](https://pse-trusted-setup-ppot.s3.eu-central-1.amazonaws.com/pot28_0080/ppot_0080_23.ptau)
+- **Phase 2**: The circuit-specific zkey files are not publicly available as the project is currently in active development
+
 5. **Deploy smart contracts to Arbitrum Sepolia**
 
 Navigate to the contracts directory and deploy:
