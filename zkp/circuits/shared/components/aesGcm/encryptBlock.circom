@@ -284,13 +284,41 @@ template EncryptBlock(keyBits) {
         (Nk, Nr) = (8, 14);
     }
     var expandedNk = 4 * (Nr + 1);
-    
+
     signal input {byte} plaintext[16];
     input Word() key[Nk];
     signal output {byte} ciphertext[16];
-    
+
     // Expand the key
     Word() roundKey[expandedNk] <== ExpandKey(keyBits)(key);
+
+    ciphertext <== EncryptBlockWithRoundKeys(keyBits)(plaintext, roundKey);
+}
+
+/**
+ * AES block encryption with a pre-expanded key schedule
+ *
+ * Key expansion does not depend on the plaintext, so callers that encrypt
+ * multiple blocks under the same key (CTR, GCM) should run ExpandKey once
+ * and share the round keys instead of calling EncryptBlock per block.
+ *
+ * @param keyBits - Key size in bits (128, 192, or 256)
+ */
+template EncryptBlockWithRoundKeys(keyBits) {
+    var Nr;
+    assert(keyBits == 128 || keyBits == 192 || keyBits == 256);
+    if (keyBits == 128) {
+        Nr = 10;
+    } else if (keyBits == 192) {
+        Nr = 12;
+    } else {
+        Nr = 14;
+    }
+    var expandedNk = 4 * (Nr + 1);
+
+    signal input {byte} plaintext[16];
+    input Word() roundKey[expandedNk];
+    signal output {byte} ciphertext[16];
 
     // Group by 4 words for each round
     Word() roundKeyGroup[Nr + 1][4];

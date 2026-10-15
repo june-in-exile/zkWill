@@ -34,12 +34,16 @@ template GcmEncrypt(keyBits, ivLength, textLengthBytes, aadLengthBytes) {
     signal output {byte} ciphertext[textLengthBytes];
     signal output {byte} authTag[16];
 
+    // Expand the key once and share the round keys across all block encryptions
+    var expandedNk = 4 * (Nk + 7); // = 4 * (Nr + 1) since Nr = Nk + 6
+    Word() roundKey[expandedNk] <== ExpandKey(keyBits)(key);
+
     // Step 1: Generate hash subkey H = CIPH_K(0^128)
     signal {byte} zeroBlock[16];
     for (var i = 0; i < 16; i++) {
         zeroBlock[i] <== 0;
     }
-    signal {byte} hashKey[16] <== EncryptBlock(keyBits)(zeroBlock, key);
+    signal {byte} hashKey[16] <== EncryptBlockWithRoundKeys(keyBits)(zeroBlock, roundKey);
     
     // Step 2: Compute J0 based on IV length
     signal {byte} j0[16];
@@ -52,7 +56,7 @@ template GcmEncrypt(keyBits, ivLength, textLengthBytes, aadLengthBytes) {
     }
 
     // Step 3: CTR encryption with incremented J0
-    ciphertext <== CtrEncrypt(keyBits, textLengthBytes)(plaintext, key, IncrementCounterOptimized()(j0));
+    ciphertext <== CtrEncryptWithRoundKeys(keyBits, textLengthBytes)(plaintext, roundKey, IncrementCounterOptimized()(j0));
     
     // Step 4: Calculate total blocks needed for GHASH input
     var aadNumBlocks = (aadLengthBytes + 15) \ 16;
@@ -121,7 +125,7 @@ template GcmEncrypt(keyBits, ivLength, textLengthBytes, aadLengthBytes) {
     signal {byte} S[16] <== GHashOptimized(totalAuthBlocks)(ghashInput, hashKey);
     
     // Step 6: Final tag calculation: T = GCTR_K(J0, S) = S ⊕ CIPH_K(J0)
-    signal {byte} tagMask[16] <== EncryptBlock(keyBits)(j0, key);
+    signal {byte} tagMask[16] <== EncryptBlockWithRoundKeys(keyBits)(j0, roundKey);
     for (var i = 0; i < 16; i++) {
         authTag[i] <== BitwiseXor(2, 8)([S[i], tagMask[i]]);
     }

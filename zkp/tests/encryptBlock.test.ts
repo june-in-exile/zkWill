@@ -708,3 +708,97 @@ describe("EncryptBlock Circuit", function () {
     });
   });
 });
+
+describe("EncryptBlockWithRoundKeys Circuit", function () {
+  let circuit: WitnessTester<["plaintext", "roundKey"], ["ciphertext"]>;
+
+  describe("AES-128 Block Cipher with Pre-expanded Key", function (): void {
+    beforeAll(async function (): Promise<void> {
+      circuit = await WitnessTester.construct(
+        "circuits/shared/components/aesGcm/encryptBlock.circom",
+        "EncryptBlockWithRoundKeys",
+        {
+          templateParams: ["128"],
+        },
+      );
+      circuit.setConstraint("AES-128 block cipher with pre-expanded key");
+    });
+
+    afterAll(async function (): Promise<void> {
+      if (circuit) {
+        await circuit.release();
+      }
+    });
+
+    it("should exclude key expansion from the constraint count", async function (): Promise<void> {
+      // EncryptBlock(128) - ExpandKey(128) = 86432 - 15040
+      await circuit.expectConstraintCount(71392, true);
+    });
+
+    it("should match EncryptBlock on random inputs", async function (): Promise<void> {
+      for (let i = 0; i < 3; i++) {
+        const plaintext = Array.from(AESUtils.randomBytes(16)) as Byte16;
+        const key = byteToWord(Array.from(AESUtils.randomBytes(16)) as Byte[]);
+
+        await circuit.expectPass(
+          { plaintext, roundKey: wordToByte(expandKey(key)) },
+          { ciphertext: encryptBlock(plaintext, key) },
+        );
+      }
+    });
+  });
+
+  describe("AES-256 Block Cipher with Pre-expanded Key", function (): void {
+    beforeAll(async function (): Promise<void> {
+      circuit = await WitnessTester.construct(
+        "circuits/shared/components/aesGcm/encryptBlock.circom",
+        "EncryptBlockWithRoundKeys",
+        {
+          templateParams: ["256"],
+        },
+      );
+      circuit.setConstraint("AES-256 block cipher with pre-expanded key");
+    });
+
+    afterAll(async function (): Promise<void> {
+      if (circuit) {
+        await circuit.release();
+      }
+    });
+
+    it("should exclude key expansion from the constraint count", async function (): Promise<void> {
+      // EncryptBlock(256) - ExpandKey(256) = 119936 - 18976
+      await circuit.expectConstraintCount(100960, true);
+    });
+
+    it("should correctly encrypt using NIST test vectors", async function (): Promise<void> {
+      // NIST FIPS 197 Appendix C.3
+      const plaintext = [
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
+        0xcc, 0xdd, 0xee, 0xff,
+      ];
+      const key = byteToWord(Array.from({ length: 32 }, (_, i) => i) as Byte[]);
+      const ciphertext = [
+        0x8e, 0xa2, 0xb7, 0xca, 0x51, 0x67, 0x45, 0xbf, 0xea, 0xfc, 0x49, 0x90,
+        0x4b, 0x49, 0x60, 0x89,
+      ];
+
+      await circuit.expectPass(
+        { plaintext, roundKey: wordToByte(expandKey(key)) },
+        { ciphertext },
+      );
+    });
+
+    it("should match EncryptBlock on random inputs", async function (): Promise<void> {
+      for (let i = 0; i < 3; i++) {
+        const plaintext = Array.from(AESUtils.randomBytes(16)) as Byte16;
+        const key = byteToWord(Array.from(AESUtils.randomBytes(32)) as Byte[]);
+
+        await circuit.expectPass(
+          { plaintext, roundKey: wordToByte(expandKey(key)) },
+          { ciphertext: encryptBlock(plaintext, key) },
+        );
+      }
+    });
+  });
+});

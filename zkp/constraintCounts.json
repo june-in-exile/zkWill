@@ -149,19 +149,19 @@
   },
   "ctrDecrypt": {
     "CtrDecrypt": {
-      "AES-256-CTR 4-block decryption": 481379
+      "AES-256-CTR 4-block decryption": 424451
     }
   },
   "ctrEncrypt": {
     "CtrEncrypt": {
       "AES-128-CTR 3-byte encryption": 86504,
       "AES-128-CTR 1-block encryption": 86816,
-      "AES-128-CTR 47-byte encryption": 260490,
-      "AES-128-CTR 4-block encryption": 347363,
-      "AES-192-CTR 30-byte encryption": 199857,
-      "AES-192-CTR 4-block encryption": 399843,
-      "AES-256-CTR 17-byte encryption": 240313,
-      "AES-256-CTR 4-block encryption": 481379
+      "AES-128-CTR 47-byte encryption": 230410,
+      "AES-128-CTR 4-block encryption": 302243,
+      "AES-192-CTR 30-byte encryption": 186481,
+      "AES-192-CTR 4-block encryption": 359715,
+      "AES-256-CTR 17-byte encryption": 221337,
+      "AES-256-CTR 4-block encryption": 424451
     }
   },
   "deserialization": {
@@ -210,6 +210,10 @@
       "AES-128 block cipher": 86432,
       "AES-192 block cipher": 99552,
       "AES-256 block cipher": 119936
+    },
+    "EncryptBlockWithRoundKeys": {
+      "AES-128 block cipher with pre-expanded key": 71392,
+      "AES-256 block cipher with pre-expanded key": 100960
     }
   },
   "eth": {
@@ -246,24 +250,24 @@
   },
   "gcmDecrypt": {
     "GcmDecrypt": {
-      "AES-256-GCM standard IV, 1-block plaintext, no aad encryption": 394529
+      "AES-256-GCM standard IV, 1-block plaintext, no aad encryption": 356577
     }
   },
   "gcmEncrypt": {
     "GcmEncrypt": {
-      "AES-128-GCM standard IV, no plaintext, no aad encryption": 190049,
-      "AES-128-GCM standard IV, 12-byte plaintext, no aad encryption": 293921,
-      "AES-128-GCM standard IV, 1-block plaintext, no aad encryption": 294017,
-      "AES-128-GCM standard IV, 2-block plaintext, 1-block aad encryption": 415170,
-      "AES-128-GCM standard IV, 2-block plaintext, 30-byte aad encryption": 432322,
-      "AES-128-GCM 1-byte IV, 1-block plaintext, no aad encryption": 328337,
-      "AES-128-GCM 8-byte IV, 1-block plaintext, no aad encryption": 328337,
-      "AES-192-GCM standard IV, 1-block plaintext, no aad encryption": 333377,
-      "AES-192-GCM standard IV, 12-byte plaintext, 5-byte aad encryption": 350433,
-      "AES-192-GCM standard IV, 2-block plaintext, 1-block aad encryption": 467650,
-      "AES-256-GCM standard IV, 1-block plaintext, no aad encryption": 394529,
-      "AES-256-GCM standard IV, 2-block plaintext, 1-block aad encryption": 549186,
-      "AES-256-GCM 16-byte IV, 1-block plaintext, no aad encryption": 428849
+      "AES-128-GCM standard IV, no plaintext, no aad encryption": 175009,
+      "AES-128-GCM standard IV, 12-byte plaintext, no aad encryption": 263841,
+      "AES-128-GCM standard IV, 1-block plaintext, no aad encryption": 263937,
+      "AES-128-GCM standard IV, 2-block plaintext, 1-block aad encryption": 370050,
+      "AES-128-GCM standard IV, 2-block plaintext, 30-byte aad encryption": 387202,
+      "AES-128-GCM 1-byte IV, 1-block plaintext, no aad encryption": 298257,
+      "AES-128-GCM 8-byte IV, 1-block plaintext, no aad encryption": 298257,
+      "AES-192-GCM standard IV, 1-block plaintext, no aad encryption": 306625,
+      "AES-192-GCM standard IV, 12-byte plaintext, 5-byte aad encryption": 323681,
+      "AES-192-GCM standard IV, 2-block plaintext, 1-block aad encryption": 427522,
+      "AES-256-GCM standard IV, 1-block plaintext, no aad encryption": 356577,
+      "AES-256-GCM standard IV, 2-block plaintext, 1-block aad encryption": 492258,
+      "AES-256-GCM 16-byte IV, 1-block plaintext, no aad encryption": 390897
     }
   },
   "keccak256": {

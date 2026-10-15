@@ -420,6 +420,13 @@ describe("CtrEncrypt Circuits", function () {
           );
         },
       );
+
+      it("should expand the key only once across all blocks", async function (): Promise<void> {
+        // ExpandKey(256) once + 4 blocks of EncryptBlockWithRoundKeys(256)
+        // + 3 IncrementCounterOptimized + 64 byte-wise BitwiseXor(2, 8)
+        const expected = 18976 + 4 * 100960 + 3 * 33 + 64 * 24;
+        await circuit.expectConstraintCount(expected, true);
+      });
     });
   });
 });
