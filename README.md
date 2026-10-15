@@ -73,8 +73,13 @@ npm install -g pnpm
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
 
-# Install Circom (macOS)
-brew install circom
+# Install Circom (requires Rust)
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+git clone https://github.com/iden3/circom.git
+cd circom
+cargo build --release
+cargo install --path circom
+cd ..
 ```
 
 ### Installation and Setup

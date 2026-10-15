@@ -10,8 +10,8 @@ This ZKP module is a core component of the Web3 will management system, implemen
 
 | Circuit                | Scenario                                                                                                          | Components                                                                                                                                                                        |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **uploadCid Circuit**  | Testator uploads encrypted will to IPFS and proves its validity to the blockchain without revealing will content. | 1. **Decryption**: Decrypt ciphertext (public) to plaintext (private)<br>2. **Permit2 signature verification**: Validate permit2 signature (private) within the decrypted content |
-| **createWill Circuit** | After testator's death, executor creates will contract with verified decryption.                                  | 1. **Decryption**: Decrypt ciphertext (public) to plaintext (public)<br>                                                                                                          |
+| **cidUpload Circuit**  | Testator uploads encrypted will to IPFS and proves its validity to the blockchain without revealing will content. | 1. **Decryption**: Decrypt ciphertext (public) to plaintext (private)<br>2. **Permit2 signature verification**: Validate permit2 signature (private) within the decrypted content |
+| **willCreation Circuit** | After testator's death, executor creates will contract with verified decryption.                                  | 1. **Decryption**: Decrypt ciphertext (public) to plaintext (public)<br>                                                                                                          |
 
 ### Shared Infrastructure
 
@@ -67,7 +67,7 @@ make witness                    # Generate Witness
 make trusted-setup-phase2       # Circuit-Specific Trusted Setup
 make prove                      # Generate Proof
 make verify                     # Verify Proof
-make solidity                   # Generate Solidity Verifier Contract
+make verifier                   # Generate Solidity Verifier Contract
 make generate-call              # Generate Smart Contract Call Parameters
 ```
 
@@ -76,8 +76,8 @@ make generate-call              # Generate Smart Contract Call Parameters
 Run the workflow for different circuits:
 
 ```bash
-make <command> CIRCUIT=createWill
-make <command> CIRCUIT=uploadCid
+make <command> CIRCUIT=willCreation TEMPLATE=CreateWill
+make <command> CIRCUIT=cidUpload TEMPLATE=UploadCid
 ```
 
 ### Testing
@@ -136,7 +136,7 @@ The Makefile operates on a default circuit (currently `multiplier2`), but you ca
 make compile
 
 # Use specific circuit
-make compile CIRCUIT=createWill
+make compile CIRCUIT=willCreation TEMPLATE=CreateWill
 ```
 
 ### Key Makefile Variables
