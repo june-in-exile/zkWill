@@ -62,6 +62,7 @@ describe("Workflow CLI Tests", () => {
 
   beforeAll(async () => {
     const dirs = [
+      `${inputDir}`,
       `${buildDir}`,
       `${keysDir}`,
       `${proofsDir}`,

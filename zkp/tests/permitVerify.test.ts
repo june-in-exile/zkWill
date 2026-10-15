@@ -549,7 +549,7 @@ describe("VerifyPermit Circuit", function () {
         },
       );
       circuit.setConstraint("permit with 2 estates");
-    }, 120_000);
+    }, 300_000); // 2-estate circuit compiles slowly under parallel load
 
     afterAll(async function (): Promise<void> {
       if (circuit) {
@@ -557,12 +557,12 @@ describe("VerifyPermit Circuit", function () {
       }
     });
 
-    it.only(
+    it(
       "should accept the verification for valid permit",
       { timeout: 60_000 },
       async function (): Promise<void> {
         const testWills = [
-          {
+          { /* for Arbitrum Sepolia */
             testator: BigInt("0x041F57c4492760aaE44ECed29b49a30DaAD3D4Cc"),
             executor: BigInt("0xF85d255D10EbA7Ec5a12724D134420A3C2b8EA3a"),
             estates: [
@@ -581,25 +581,25 @@ describe("VerifyPermit Circuit", function () {
                 amount: 5000000n,
               },
             ] as Estate[],
-            salt: 12694447595861466419244258169335441343265382743954236586072546691080547501349n,
-            will: BigInt("0xCfD7d00d14F04c021cB76647ACe8976580B83D54"),
-            nonce: 307798376644172688526653206965886192621n as Nonce,
-            deadline: 1789652776 as Timestamp,
+            salt: 50488959960934814917696171139809710418977764484544753035433637781874432512215n,
+            will: BigInt("0xA0088d0e8f748832f220e981Ca928711F87f01D0"),
+            nonce: 94291489168460372312063129039338610341n as Nonce,
+            deadline: 4915260772 as Timestamp,
             signature: {
               r: splitBigInt(
                 BigInt(
-                  "0xe2c3427d586d098f41d41f1a6c45dc61bc47bdf47ea0b74bbacee7e1fdaa8af8",
+                  "0xdb8c93bd4da5c30cdff1cbaf071def95a549e1445053c252e0f59c416179123b",
                 ),
               ),
               s: splitBigInt(
                 BigInt(
-                  "0x73434b90e656c5332de72de6e9ede658973947bc497fa4edafd9789de84b38ef",
+                  "0x58c3619e8f41b35c01bc25c17341395629edd459bc8ba534cc82374cb089d695",
                 ),
               ),
               v: 27,
             } as EcdsaSignature,
           },
-          // { /* for Arbitrum Sepolia */
+          // { /* for Anvil */
           //   testator: BigInt("0x041F57c4492760aaE44ECed29b49a30DaAD3D4Cc"),
           //   executor: BigInt("0xF85d255D10EbA7Ec5a12724D134420A3C2b8EA3a"),
           //   estates: [
@@ -618,19 +618,19 @@ describe("VerifyPermit Circuit", function () {
           //       amount: 5000000n,
           //     },
           //   ] as Estate[],
-          //   salt: 50488959960934814917696171139809710418977764484544753035433637781874432512215n,
-          //   will: BigInt("0xA0088d0e8f748832f220e981Ca928711F87f01D0"),
-          //   nonce: 94291489168460372312063129039338610341n as Nonce,
-          //   deadline: 4915260772 as Timestamp,
+          //   salt: 12694447595861466419244258169335441343265382743954236586072546691080547501349n,
+          //   will: BigInt("0xCfD7d00d14F04c021cB76647ACe8976580B83D54"),
+          //   nonce: 307798376644172688526653206965886192621n as Nonce,
+          //   deadline: 1789652776 as Timestamp,
           //   signature: {
           //     r: splitBigInt(
           //       BigInt(
-          //         "0xdb8c93bd4da5c30cdff1cbaf071def95a549e1445053c252e0f59c416179123b",
+          //         "0xe2c3427d586d098f41d41f1a6c45dc61bc47bdf47ea0b74bbacee7e1fdaa8af8",
           //       ),
           //     ),
           //     s: splitBigInt(
           //       BigInt(
-          //         "0x58c3619e8f41b35c01bc25c17341395629edd459bc8ba534cc82374cb089d695",
+          //         "0x73434b90e656c5332de72de6e9ede658973947bc497fa4edafd9789de84b38ef",
           //       ),
           //     ),
           //     v: 27,
