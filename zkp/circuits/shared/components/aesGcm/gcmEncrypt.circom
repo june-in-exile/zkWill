@@ -102,7 +102,7 @@ template GcmEncrypt(keyBits, ivLength, textLengthBytes, aadLengthBytes) {
         if (i == 0) {
             accAadLengthBits[i] <== ghashInput[offset + i];
         } else {
-            accAadLengthBits[i] <== ghashInput[offset + i - 1] * 2**8 + ghashInput[offset + i];
+            accAadLengthBits[i] <== accAadLengthBits[i - 1] * 2**8 + ghashInput[offset + i];
         }
     }
     accAadLengthBits[7] === aadLengthBits;
@@ -116,7 +116,7 @@ template GcmEncrypt(keyBits, ivLength, textLengthBytes, aadLengthBytes) {
         if (i == 0) {
             accTextLengthBits[i] <== ghashInput[offset + i];
         } else {
-            accTextLengthBits[i] <== ghashInput[offset + i - 1] * 2**8 + ghashInput[offset + i];
+            accTextLengthBits[i] <== accTextLengthBits[i - 1] * 2**8 + ghashInput[offset + i];
         }
     }
     accTextLengthBits[7] === textLengthBits;
