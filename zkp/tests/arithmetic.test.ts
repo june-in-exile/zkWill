@@ -11,8 +11,11 @@ describe("Divide Circuit", function () {
       circuit = await WitnessTester.construct(
         "circuits/shared/components/arithmetic.circom",
         "Divide",
+        {
+          templateParams: ["12", "8"],
+        },
       );
-      circuit.setConstraint("division");
+      circuit.setConstraint("12-by-8-bit division");
     });
 
     afterAll(async function (): Promise<void> {
@@ -423,8 +426,11 @@ describe("Mod2 Circuit", function () {
       circuit = await WitnessTester.construct(
         "circuits/shared/components/arithmetic.circom",
         "Mod2",
+        {
+          templateParams: ["33554433"],
+        },
       );
-      circuit.setConstraint("modulo 2");
+      circuit.setConstraint("modulo 2 of up to 26-bit input");
     });
 
     afterAll(async function (): Promise<void> {
@@ -468,4 +474,105 @@ describe("Mod2 Circuit", function () {
       }
     });
   });
+});
+
+// BN254 scalar field modulus
+const FIELD_PRIME =
+  21888242871839275222246405745257275088548364400416034343698204186575808495617n;
+const fieldDiv = (a: bigint, b: bigint): bigint => {
+  // Fermat inverse: b^(p-2) mod p
+  let [result, base, exp] = [1n, b % FIELD_PRIME, FIELD_PRIME - 2n];
+  while (exp > 0n) {
+    if (exp & 1n) result = (result * base) % FIELD_PRIME;
+    [base, exp] = [(base * base) % FIELD_PRIME, exp >> 1n];
+  }
+  return (((a % FIELD_PRIME) + FIELD_PRIME) * result) % FIELD_PRIME;
+};
+
+/** Override only the symbols that survived constraint simplification. */
+async function forgeWitness(
+  circuit: WitnessTester<any, any>,
+  input: Record<string, number>,
+  overrides: Record<string, bigint>,
+): Promise<bigint[]> {
+  const witness = await circuit.calculateWitness(input);
+  const kept = await circuit.readSymbols(witness);
+  const present = Object.fromEntries(
+    Object.entries(overrides).filter(([name]) => kept[name] !== undefined),
+  );
+  expect(Object.keys(present).length).toBeGreaterThan(0);
+  return circuit.editWitness(witness, present);
+}
+
+describe("Divide Soundness", function () {
+  let circuit: WitnessTester<["dividend", "divisor"], ["quotient", "remainder"]>;
+
+  beforeAll(async function (): Promise<void> {
+    circuit = await WitnessTester.construct(
+      "circuits/shared/components/arithmetic.circom",
+      "Divide",
+      { templateParams: ["12", "8"] },
+    );
+  });
+
+  afterAll(async function (): Promise<void> {
+    if (circuit) {
+      await circuit.release();
+    }
+  });
+
+  it("rejects a remainder that is not smaller than the divisor", async function (): Promise<void> {
+    // 17 = 2 * 5 + 7
+    const forged = await forgeWitness(
+      circuit,
+      { dividend: 17, divisor: 5 },
+      { "main.quotient": 2n, "main.remainder": 7n },
+    );
+    await circuit.expectConstraintFail(forged);
+  });
+
+  it("rejects a quotient that wraps around the field", async function (): Promise<void> {
+    // 17 = (17 / 5 mod p) * 5 + 0
+    const forged = await forgeWitness(
+      circuit,
+      { dividend: 17, divisor: 5 },
+      { "main.quotient": fieldDiv(17n, 5n), "main.remainder": 0n },
+    );
+    await circuit.expectConstraintFail(forged);
+  });
+});
+
+describe("Mod2 Soundness", function () {
+  let circuit: WitnessTester<["in"], ["out"]>;
+
+  beforeAll(async function (): Promise<void> {
+    circuit = await WitnessTester.construct(
+      "circuits/shared/components/arithmetic.circom",
+      "Mod2",
+      { templateParams: ["11"] },
+    );
+  });
+
+  afterAll(async function (): Promise<void> {
+    if (circuit) {
+      await circuit.release();
+    }
+  });
+
+  it.each([
+    { input: 7, forgedOut: 0n },
+    { input: 8, forgedOut: 1n },
+  ])(
+    "rejects parity $forgedOut for input $input",
+    async function ({ input, forgedOut }): Promise<void> {
+      // in = 2 * quotient + out holds in the field for either parity
+      const quotient = fieldDiv(BigInt(input) - forgedOut, 2n);
+      const forged = await forgeWitness(
+        circuit,
+        { in: input },
+        { "main.out": forgedOut, "main.quotient": quotient },
+      );
+      await circuit.expectConstraintFail(forged);
+    },
+  );
 });

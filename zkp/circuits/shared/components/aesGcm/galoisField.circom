@@ -237,6 +237,7 @@ template GF128MultiplyOptimized() {
     }
     
     // ===== Final step: Sum all contributions and reduce modulo 2 =====
+    // Every counter is maximal when all input bits are 1, which bounds each sum by 506
     for (var cBit = 0, contribution1, contribution2, contribution3; cBit < 128; cBit++) {
         contribution1 = counter1[cBit][0];
         if (cBit < p_x[1]) {
@@ -249,7 +250,7 @@ template GF128MultiplyOptimized() {
             // Only bits 0-12 can have contributions from round 3
             (contribution2, contribution3) = (counter2[3][cBit - p_x[3]], (cBit < 13) ? counter3[3][cBit - p_x[3]] : 0);
         }
-        cBits[cBit] <== Mod2()(contribution1 + contribution2 + contribution3);
+        cBits[cBit] <== Mod2(506)(contribution1 + contribution2 + contribution3);
     }
 
     // Convert final result bits back to bytes

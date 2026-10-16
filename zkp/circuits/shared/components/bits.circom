@@ -53,7 +53,7 @@ template RotateLeft(bits, positions) {
     signal input in;
     signal output out;
 
-    signal (rightPart, leftPart) <== Divide()(in * 2 ** positions, 2 ** bits);
+    signal (rightPart, leftPart) <== Divide(positions, bits + 1)(in * 2 ** positions, 2 ** bits);
 
     out <== leftPart + rightPart;
 }
@@ -118,7 +118,7 @@ template BitwiseXorOptimized(n, bits) {
         for (var i = 2; i < n; i++) {
             tempSum += inBits[i][bitIdx];
         }
-        outBits[bitIdx] <== Mod2()(tempSum);
+        outBits[bitIdx] <== Mod2(n)(tempSum);
     }
     
     out <== Bits2Num(bits)(outBits);
@@ -206,17 +206,29 @@ template NumToBytes(numBytes, endian) {
     signal input num;
     signal output {byte} bytes[numBytes];
 
-    signal intermediateNums[numBytes];
-    
-    intermediateNums[0] <== num;
-    for (var numIdx = 1; numIdx < numBytes; numIdx++) {
+    assert(numBytes <= 32);
+
+    // A full 32-byte decomposition exceeds the field size, so use the strict
+    // variant there to reject the aliases num + k * p
+    var numBits = numBytes * 8 < 254 ? numBytes * 8 : 254;
+    signal bits[numBits];
+    if (numBits < 254) {
+        bits <== Num2Bits(numBits)(num);
+    } else {
+        bits <== Num2Bits_strict()(num);
+    }
+
+    for (var byteIdx = 0; byteIdx < numBytes; byteIdx++) {
+        var byteValue = 0;
+        for (var bitIdx = 0; bitIdx < 8 && byteIdx * 8 + bitIdx < numBits; bitIdx++) {
+            byteValue += bits[byteIdx * 8 + bitIdx] * 2**bitIdx;
+        }
         if (endian == 0) {
-            (intermediateNums[numIdx], bytes[numBytes - numIdx]) <== Divide()(intermediateNums[numIdx - 1], 2**8);
+            bytes[numBytes - 1 - byteIdx] <== byteValue;
         } else {
-            (intermediateNums[numIdx], bytes[numIdx - 1]) <== Divide()(intermediateNums[numIdx - 1], 2**8);
+            bytes[byteIdx] <== byteValue;
         }
     }
-    bytes[(numBytes - 1) * endian] <== intermediateNums[numBytes - 1];
 }
 
 /**
@@ -229,7 +241,7 @@ template BytesToHex(bytesLength) {
     signal output {hex} hex[bytesLength * 2];
 
     for (var i = 0; i < bytesLength; i++) {
-        (hex[i * 2], hex[i * 2 + 1]) <== Divide()(bytes[i], 16);
+        (hex[i * 2], hex[i * 2 + 1]) <== Divide(4, 5)(bytes[i], 16);
     }
 }
 

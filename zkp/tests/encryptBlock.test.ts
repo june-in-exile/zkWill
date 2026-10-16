@@ -731,8 +731,8 @@ describe("EncryptBlockWithRoundKeys Circuit", function () {
     });
 
     it("should exclude key expansion from the constraint count", async function (): Promise<void> {
-      // EncryptBlock(128) - ExpandKey(128) = 86432 - 15040
-      await circuit.expectConstraintCount(71392, true);
+      // EncryptBlock(128) - ExpandKey(128) = 88736 - 15040
+      await circuit.expectConstraintCount(73696, true);
     });
 
     it("should match EncryptBlock on random inputs", async function (): Promise<void> {
@@ -767,8 +767,8 @@ describe("EncryptBlockWithRoundKeys Circuit", function () {
     });
 
     it("should exclude key expansion from the constraint count", async function (): Promise<void> {
-      // EncryptBlock(256) - ExpandKey(256) = 119936 - 18976
-      await circuit.expectConstraintCount(100960, true);
+      // EncryptBlock(256) - ExpandKey(256) = 123264 - 18976
+      await circuit.expectConstraintCount(104288, true);
     });
 
     it("should correctly encrypt using NIST test vectors", async function (): Promise<void> {

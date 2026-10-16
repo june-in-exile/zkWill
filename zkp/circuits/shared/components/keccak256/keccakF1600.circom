@@ -31,9 +31,9 @@ template Theta() {
         for (var z = 0; z < 64; z++) {
             // D computation: D[x,z] = C[(x-1) % 5, z] + C[(x+1) % 5, (z-1) % 64]
             D[x][z] <== C[(x + 4) % 5][z] + C[(x + 1) % 5][(z + 63) % 64];
-            // A'[x,y,z] = (A[x,y,z] + D[x,z]) % 2
+            // A'[x,y,z] = (A[x,y,z] + D[x,z]) % 2, where A + D <= 1 + 5 + 5
             for (var y = 0; y < 5; y++) {
-                newStateArray[x][y][z] <== Mod2()(stateArray[x][y][z] + D[x][z]);
+                newStateArray[x][y][z] <== Mod2(11)(stateArray[x][y][z] + D[x][z]);
             }
         }
     }
