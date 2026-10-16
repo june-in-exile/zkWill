@@ -99,13 +99,11 @@ template ExpandKey(keyBits) {
     }
 }
 
-template SBox() {
-    signal input {byte} in;
-    signal output {byte} out;
-
-    var wIn = 1, nIn = 256;
-
-    var substitutionBox[nIn][wIn] = [
+/**
+ * AES S-box lookup table (FIPS 197, Figure 7), one 1-element row per input byte
+ */
+function SubstitutionBox() {
+    var substitutionBox[256][1] = [
         [0x63], [0x7c], [0x77], [0x7b], [0xf2], [0x6b], [0x6f], [0xc5],
         [0x30], [0x01], [0x67], [0x2b], [0xfe], [0xd7], [0xab], [0x76],
         [0xca], [0x82], [0xc9], [0x7d], [0xfa], [0x59], [0x47], [0xf0],
@@ -139,9 +137,60 @@ template SBox() {
         [0x8c], [0xa1], [0x89], [0x0d], [0xbf], [0xe6], [0x42], [0x68],
         [0x41], [0x99], [0x2d], [0x0f], [0xb0], [0x54], [0xbb], [0x16]
     ];
+    return substitutionBox;
+}
+
+template SBox() {
+    signal input {byte} in;
+    signal output {byte} out;
+
+    var wIn = 1, nIn = 256;
+
+    var substitutionBox[nIn][wIn] = SubstitutionBox();
     
     signal outs[wIn] <== Multiplexer(wIn,nIn)(substitutionBox,in);
     out <== outs[0];
+}
+
+/**
+ * Optimized version that uses a 16x16 two-level lookup instead of a single 256-way multiplexer.
+ *
+ * Constraints per byte: 48 (Decoder(16) + Decoder(16) + 16 row products) vs 256 for SBox,
+ * i.e. 256 / 48 ≈ 5.33x fewer.
+ */
+template SBoxOptimized() {
+    signal input {byte} in;
+    signal output {byte} out;
+
+    var substitutionBox[256][1] = SubstitutionBox();
+
+    // Split in = 16 * hi + lo. Each Decoder only accepts a selector in [0, 15],
+    // so the split is unique and in is implicitly range-checked to [0, 255].
+    signal hi <-- in \ 16;
+    signal lo <-- in % 16;
+    in === hi * 16 + lo;
+
+    component hiDecoder = Decoder(16);
+    hiDecoder.inp <== hi;
+    hiDecoder.success === 1;
+
+    component loDecoder = Decoder(16);
+    loDecoder.inp <== lo;
+    loDecoder.success === 1;
+
+    // The table is constant, so selecting the column within each row is linear;
+    // only selecting the row costs one constraint per row.
+    signal rowProd[16];
+    var lookup = 0;
+    for (var h = 0; h < 16; h++) {
+        var row = 0;
+        for (var l = 0; l < 16; l++) {
+            row += substitutionBox[h * 16 + l][0] * loDecoder.out[l];
+        }
+        rowProd[h] <== hiDecoder.out[h] * row;
+        lookup += rowProd[h];
+    }
+    out <== lookup;
 }
 
 /**
@@ -178,7 +227,7 @@ template SubBytes() {
     signal output {byte} out[byteCount];
     
     for (var i = 0; i < byteCount; i++) {
-        out[i] <== SBox()(in[i]);
+        out[i] <== SBoxOptimized()(in[i]);
     }
 }
 

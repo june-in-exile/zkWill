@@ -122,6 +122,119 @@ describe("ExpandKey Circuit", function () {
   });
 });
 
+describe("SBox Circuit", function () {
+  let circuit: WitnessTester<["in"], ["out"]>;
+
+  beforeAll(async function (): Promise<void> {
+    circuit = await WitnessTester.construct(
+      "circuits/shared/components/aesGcm/encryptBlock.circom",
+      "SBox",
+    );
+    circuit.setConstraint("1-byte s-box lookup");
+  });
+
+  afterAll(async function (): Promise<void> {
+    if (circuit) {
+      await circuit.release();
+    }
+  });
+
+  it("should cost 256 constraints with a single 256-way multiplexer", async function (): Promise<void> {
+    await circuit.expectConstraintCount(256, true);
+  });
+
+  it("should substitute all bytes according to AES specification", async function (): Promise<void> {
+    for (let byte = 0x00; byte <= 0xff; byte++) {
+      await circuit.expectPass(
+        { in: byte },
+        { out: substituteBytes([byte] as Byte[])[0] },
+      );
+    }
+  });
+});
+
+describe("SBoxOptimized Circuit", function () {
+  let circuit: WitnessTester<["in"], ["out"]>;
+
+  // Honest input 0x53 = 16 * 5 + 3, S-box(0x53) = 0xed
+  const input = 0x53;
+  const [hi, lo] = [input >> 4, input & 0x0f];
+  const component = "main.sboxoptimizedComponent";
+
+  /** Forge a witness, refusing symbols that O2 removed (editing them would be a silent no-op). */
+  async function forge(
+    overrides: Record<string, bigint>,
+  ): Promise<bigint[]> {
+    const witness = await circuit.calculateWitness({ in: input });
+    const present = await circuit.readSymbols(witness, Object.keys(overrides));
+    const missing = Object.keys(present).filter((s) => present[s] === undefined);
+    expect(missing).toStrictEqual([]);
+    return circuit.editWitness(witness, overrides);
+  }
+
+  beforeAll(async function (): Promise<void> {
+    circuit = await WitnessTester.construct(
+      "circuits/shared/components/aesGcm/encryptBlock.circom",
+      "SBoxOptimized",
+    );
+    circuit.setConstraint("optimized 1-byte s-box lookup");
+  });
+
+  afterAll(async function (): Promise<void> {
+    if (circuit) {
+      await circuit.release();
+    }
+  });
+
+  it("should cost 48 constraints with a 16x16 two-level lookup", async function (): Promise<void> {
+    // Decoder(16) for hi + Decoder(16) for lo + 16 row products, 256 / 48 ≈ 5.33x fewer than SBox
+    await circuit.expectConstraintCount(48, true);
+  });
+
+  it("should substitute all bytes according to AES specification", async function (): Promise<void> {
+    for (let byte = 0x00; byte <= 0xff; byte++) {
+      await circuit.expectPass(
+        { in: byte },
+        { out: substituteBytes([byte] as Byte[])[0] },
+      );
+    }
+  });
+
+  it("should reject out-of-range input", async function (): Promise<void> {
+    for (const byte of [0x100, 0x1000]) {
+      await circuit.expectFail({ in: byte });
+    }
+  });
+
+  it("should accept the unmodified honest witness", async function (): Promise<void> {
+    await circuit.expectConstraintPass(await forge({}));
+  });
+
+  it("should reject a witness that selects a different table entry", async function (): Promise<void> {
+    const forgedLo = lo + 1;
+    const forgedOut = BigInt(substituteBytes([(hi << 4) | forgedLo] as Byte[])[0]);
+
+    await circuit.expectConstraintFail(
+      await forge({
+        [`${component}.loDecoder.out[${lo}]`]: 0n,
+        [`${component}.loDecoder.out[${forgedLo}]`]: 1n,
+        [`${component}.rowProd[${hi}]`]: forgedOut,
+        "main.out": forgedOut,
+      }),
+    );
+  });
+
+  it("should reject a witness with an all-zero one-hot selector", async function (): Promise<void> {
+    await circuit.expectConstraintFail(
+      await forge({
+        [`${component}.loDecoder.out[${lo}]`]: 0n,
+        [`${component}.rowProd[${hi}]`]: 0n,
+        "main.out": 0n,
+      }),
+    );
+  });
+});
+
 describe("SubWord Circuit", function () {
   let circuit: WitnessTester<["in"], ["out"]>;
 
@@ -731,8 +844,8 @@ describe("EncryptBlockWithRoundKeys Circuit", function () {
     });
 
     it("should exclude key expansion from the constraint count", async function (): Promise<void> {
-      // EncryptBlock(128) - ExpandKey(128) = 88736 - 15040
-      await circuit.expectConstraintCount(73696, true);
+      // EncryptBlock(128) - ExpandKey(128) = 47136 - 6720
+      await circuit.expectConstraintCount(40416, true);
     });
 
     it("should match EncryptBlock on random inputs", async function (): Promise<void> {
@@ -767,8 +880,8 @@ describe("EncryptBlockWithRoundKeys Circuit", function () {
     });
 
     it("should exclude key expansion from the constraint count", async function (): Promise<void> {
-      // EncryptBlock(256) - ExpandKey(256) = 123264 - 18976
-      await circuit.expectConstraintCount(104288, true);
+      // EncryptBlock(256) - ExpandKey(256) = 65856 - 8160
+      await circuit.expectConstraintCount(57696, true);
     });
 
     it("should correctly encrypt using NIST test vectors", async function (): Promise<void> {

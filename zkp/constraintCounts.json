@@ -7,7 +7,7 @@
   },
   "arithmetic": {
     "Divide": {
-      "division": 1
+      "12-by-8-bit division": 29
     },
     "MultiplyTwoArray": {
       "1-element array multiplication": 1,
@@ -21,7 +21,7 @@
       "sum 10 elements": 0
     },
     "Mod2": {
-      "modulo 2": 1
+      "modulo 2 of up to 26-bit input": 26
     }
   },
   "base64": {
@@ -63,10 +63,10 @@
       "32-bit 8-offset shift right": 32
     },
     "RotateLeft": {
-      "0-bit rotation in 64-bit": 0,
-      "1-bit rotation in 64-bit": 0,
-      "31-bit rotation in 64-bit": 0,
-      "63-bit rotation in 64-bit": 0
+      "0-bit rotation in 64-bit": 130,
+      "1-bit rotation in 64-bit": 131,
+      "31-bit rotation in 64-bit": 161,
+      "63-bit rotation in 64-bit": 193
     },
     "BitwiseXor": {
       "2x8-bit xor operation": 24,
@@ -90,14 +90,14 @@
       "little-endian 16-byte to 128-bit conversion": 0
     },
     "NumToBytes": {
-      "big-endian 16-bit to 2-byte conversion": 0,
-      "little-endian 16-bit to 2-byte conversion": 0,
-      "big-endian 128-bit to 16-byte conversion": 0,
-      "little-endian 128-bit to 16-byte conversion": 0
+      "big-endian 16-bit to 2-byte conversion": 16,
+      "little-endian 16-bit to 2-byte conversion": 16,
+      "big-endian 128-bit to 16-byte conversion": 128,
+      "little-endian 128-bit to 16-byte conversion": 128
     },
     "BytesToHex": {
-      "1-byte to 2-hex conversion": 0,
-      "8-byte to 16-hex conversion": 0
+      "1-byte to 2-hex conversion": 14,
+      "8-byte to 16-hex conversion": 112
     },
     "HexToBytes": {
       "2-hex to 1-byte conversion": 0,
@@ -112,12 +112,12 @@
       "lsb-first 256 bits to 32-byte conversion": 0
     },
     "BitwiseXorOptimized": {
-      "optimized 3x8-bit xor operation": 64,
-      "optimized 5x8-bit xor operation": 48,
-      "optimized 5x16-bit xor operation": 96,
-      "optimized 5x64-bit xor operation": 384,
-      "optimized 10x4-bit xor operation": 44,
-      "optimized 3x32-bit xor operation": 128
+      "optimized 3x8-bit xor operation": 80,
+      "optimized 5x8-bit xor operation": 64,
+      "optimized 5x16-bit xor operation": 128,
+      "optimized 5x64-bit xor operation": 512,
+      "optimized 10x4-bit xor operation": 56,
+      "optimized 3x32-bit xor operation": 160
     }
   },
   "cidUpload": {
@@ -131,14 +131,14 @@
       "j0 computation for standard IV (12 bytes)": 4
     },
     "ComputeJ0NonStandard": {
-      "j0 computation for 16-byte IV": 34320,
-      "j0 computation for 1-byte IV": 34320,
-      "j0 computation for 4-byte IV": 34320,
-      "j0 computation for 7-byte IV": 34320,
-      "j0 computation for 8-byte IV": 34320,
-      "j0 computation for 15-byte IV": 34320,
-      "j0 computation for 31-byte IV": 51472,
-      "j0 computation for 32-byte IV": 51472
+      "j0 computation for 16-byte IV": 36368,
+      "j0 computation for 1-byte IV": 36368,
+      "j0 computation for 4-byte IV": 36368,
+      "j0 computation for 7-byte IV": 36368,
+      "j0 computation for 8-byte IV": 36368,
+      "j0 computation for 15-byte IV": 36368,
+      "j0 computation for 31-byte IV": 54544,
+      "j0 computation for 32-byte IV": 54544
     },
     "IncrementCounter": {
       "counter increment": 136
@@ -149,19 +149,19 @@
   },
   "ctrDecrypt": {
     "CtrDecrypt": {
-      "AES-256-CTR 4-block decryption": 424451
+      "AES-256-CTR 4-block decryption": 240579
     }
   },
   "ctrEncrypt": {
     "CtrEncrypt": {
-      "AES-128-CTR 3-byte encryption": 86504,
-      "AES-128-CTR 1-block encryption": 86816,
-      "AES-128-CTR 47-byte encryption": 230410,
-      "AES-128-CTR 4-block encryption": 302243,
-      "AES-192-CTR 30-byte encryption": 186481,
-      "AES-192-CTR 4-block encryption": 359715,
-      "AES-256-CTR 17-byte encryption": 221337,
-      "AES-256-CTR 4-block encryption": 424451
+      "AES-128-CTR 3-byte encryption": 47208,
+      "AES-128-CTR 1-block encryption": 47520,
+      "AES-128-CTR 47-byte encryption": 129162,
+      "AES-128-CTR 4-block encryption": 170019,
+      "AES-192-CTR 30-byte encryption": 105585,
+      "AES-192-CTR 4-block encryption": 204579,
+      "AES-256-CTR 17-byte encryption": 123993,
+      "AES-256-CTR 4-block encryption": 240579
     }
   },
   "deserialization": {
@@ -179,41 +179,47 @@
   },
   "encryptBlock": {
     "ExpandKey": {
-      "AES-128 key expansion": 15040,
-      "AES-192 key expansion": 13376,
-      "AES-256 key expansion": 18976
+      "AES-128 key expansion": 6720,
+      "AES-192 key expansion": 6720,
+      "AES-256 key expansion": 8160
     },
     "SubWord": {
-      "word substitution": 1024
+      "word substitution": 192
     },
     "SubBytes": {
-      "16-byte substitution": 4096
+      "16-byte substitution": 768
     },
     "SubstituteBytes": {
-      "1-byte bytes substitution": 256,
-      "4-byte bytes substitution": 1024,
-      "16-byte bytes substitution": 4096
+      "1-byte bytes substitution": 48,
+      "4-byte bytes substitution": 192,
+      "16-byte bytes substitution": 768
     },
     "ShiftRows": {
       "rows shifting": 0
     },
     "MixColumn": {
-      "column mixing": 728
+      "column mixing": 792
     },
     "MixColumns": {
-      "columns mixing": 2912
+      "columns mixing": 3168
     },
     "AddRoundKey": {
       "round key addition": 384
     },
     "EncryptBlock": {
-      "AES-128 block cipher": 86432,
-      "AES-192 block cipher": 99552,
-      "AES-256 block cipher": 119936
+      "AES-128 block cipher": 47136,
+      "AES-192 block cipher": 55776,
+      "AES-256 block cipher": 65856
     },
     "EncryptBlockWithRoundKeys": {
-      "AES-128 block cipher with pre-expanded key": 71392,
-      "AES-256 block cipher with pre-expanded key": 100960
+      "AES-128 block cipher with pre-expanded key": 40416,
+      "AES-256 block cipher with pre-expanded key": 57696
+    },
+    "SBox": {
+      "1-byte s-box lookup": 256
+    },
+    "SBoxOptimized": {
+      "optimized 1-byte s-box lookup": 48
     }
   },
   "eth": {
@@ -221,7 +227,7 @@
       "flatten public key in the foramt of 2 4*64-bit registers": 512
     },
     "PubkeyToAddress": {
-      "convert 512-bit public key to Ethereum address": 115200
+      "convert 512-bit public key to Ethereum address": 230400
     }
   },
   "galoisField": {
@@ -235,51 +241,51 @@
       "GF(2^128) multiplication": 33280
     },
     "GHash": {
-      "1-block GHASH": 17152,
-      "2-block GHASH": 34304,
-      "4-block GHASH": 68608
+      "1-block GHASH": 18176,
+      "2-block GHASH": 36352,
+      "4-block GHASH": 72704
     },
     "GF128MultiplyOptimized": {
-      "optimized GF(2^128) multiplication": 16768
+      "optimized GF(2^128) multiplication": 17792
     },
     "GHashOptimized": {
-      "optimized 1-block GHASH": 16768,
-      "optimized 2-block GHASH": 33920,
-      "optimized 4-block GHASH": 68224
+      "optimized 1-block GHASH": 17792,
+      "optimized 2-block GHASH": 35968,
+      "optimized 4-block GHASH": 72320
     }
   },
   "gcmDecrypt": {
     "GcmDecrypt": {
-      "AES-256-GCM standard IV, 1-block plaintext, no aad encryption": 356577
+      "AES-256-GCM standard IV, 1-block plaintext, no aad encryption": 218017
     }
   },
   "gcmEncrypt": {
     "GcmEncrypt": {
-      "AES-128-GCM standard IV, no plaintext, no aad encryption": 175009,
-      "AES-128-GCM standard IV, 12-byte plaintext, no aad encryption": 263841,
-      "AES-128-GCM standard IV, 1-block plaintext, no aad encryption": 263937,
-      "AES-128-GCM standard IV, 2-block plaintext, 1-block aad encryption": 370050,
-      "AES-128-GCM standard IV, 2-block plaintext, 30-byte aad encryption": 387202,
-      "AES-128-GCM 1-byte IV, 1-block plaintext, no aad encryption": 298257,
-      "AES-128-GCM 8-byte IV, 1-block plaintext, no aad encryption": 298257,
-      "AES-192-GCM standard IV, 1-block plaintext, no aad encryption": 306625,
-      "AES-192-GCM standard IV, 12-byte plaintext, 5-byte aad encryption": 323681,
-      "AES-192-GCM standard IV, 2-block plaintext, 1-block aad encryption": 427522,
-      "AES-256-GCM standard IV, 1-block plaintext, no aad encryption": 356577,
-      "AES-256-GCM standard IV, 2-block plaintext, 1-block aad encryption": 492258,
-      "AES-256-GCM 16-byte IV, 1-block plaintext, no aad encryption": 390897
+      "AES-128-GCM standard IV, no plaintext, no aad encryption": 105761,
+      "AES-128-GCM standard IV, 12-byte plaintext, no aad encryption": 164641,
+      "AES-128-GCM standard IV, 1-block plaintext, no aad encryption": 164737,
+      "AES-128-GCM standard IV, 2-block plaintext, 1-block aad encryption": 241922,
+      "AES-128-GCM standard IV, 2-block plaintext, 30-byte aad encryption": 260098,
+      "AES-128-GCM 1-byte IV, 1-block plaintext, no aad encryption": 201105,
+      "AES-128-GCM 8-byte IV, 1-block plaintext, no aad encryption": 201105,
+      "AES-192-GCM standard IV, 1-block plaintext, no aad encryption": 190657,
+      "AES-192-GCM standard IV, 12-byte plaintext, 5-byte aad encryption": 208737,
+      "AES-192-GCM standard IV, 2-block plaintext, 1-block aad encryption": 276482,
+      "AES-256-GCM standard IV, 1-block plaintext, no aad encryption": 218017,
+      "AES-256-GCM standard IV, 2-block plaintext, 1-block aad encryption": 312482,
+      "AES-256-GCM 16-byte IV, 1-block plaintext, no aad encryption": 254385
     }
   },
   "keccak256": {
     "Keccak256": {
-      "1-bit massage": 115200,
-      "256-bit massage": 115200,
-      "512-bit massage": 115200,
-      "1080-bit massage": 115200,
-      "1086-bit massage": 115200,
-      "1087-bit massage": 230400,
-      "1088-bit massage": 230400,
-      "1360-bit massage": 230672
+      "1-bit massage": 230400,
+      "256-bit massage": 230400,
+      "512-bit massage": 230400,
+      "1080-bit massage": 230400,
+      "1086-bit massage": 230400,
+      "1087-bit massage": 460800,
+      "1088-bit massage": 460800,
+      "1360-bit massage": 461072
     },
     "Keccak256Vocdoni": {
       "vocdoni 1-bit massage": 138170,
@@ -290,7 +296,7 @@
   },
   "keccakF1600": {
     "Theta": {
-      "theta": 1600
+      "theta": 6400
     },
     "Rho": {
       "rho": 0
@@ -305,7 +311,7 @@
       "iota": 0
     },
     "KeccakF1600": {
-      "keccak-f[1600]": 115200
+      "keccak-f[1600]": 230400
     }
   },
   "multiplier2": {
@@ -315,14 +321,14 @@
   },
   "permitHash": {
     "HashPermit": {
-      "permit with 1 estates": 462272,
-      "permit with 2 estates": 577984
+      "permit with 1 estates": 925647,
+      "permit with 2 estates": 1157589
     }
   },
   "permitVerify": {
     "VerifyPermit": {
-      "permit with 1 estate": 2202599,
-      "permit with 2 estates": 2318311
+      "permit with 1 estate": 2896374,
+      "permit with 2 estates": 3128316
     }
   },
   "pubkeyRecover": {
@@ -368,20 +374,20 @@
       "544-bit message, 1088-bit rate (544-bit padding)": 544
     },
     "Absorb": {
-      "1088-bit message, 1088-bit rate": 115200,
-      "2176-bit message, 1088-bit rate": 231488
+      "1088-bit message, 1088-bit rate": 230400,
+      "2176-bit message, 1088-bit rate": 461888
     },
     "Squeeze": {
       "256-bit digest, 1088-bit rate": 0,
       "1088-bit digest, 1088-bit rate": 0,
-      "1360-bit digest, 1088-bit rate": 115200
+      "1360-bit digest, 1088-bit rate": 230400
     }
   },
   "typedDataHash": {
     "HashTypedData": {
-      "anvil": 115200,
-      "arbitrum sepolia": 115200,
-      "mainnet": 115200
+      "anvil": 230400,
+      "arbitrum sepolia": 230400,
+      "mainnet": 230400
     }
   },
   "utf8": {
