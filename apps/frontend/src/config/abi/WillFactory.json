@@ -751,8 +751,19 @@
   },
   {
     "type": "error",
-    "name": "InvalidWitnessCount",
-    "inputs": []
+    "name": "InvalidWitnesses",
+    "inputs": [
+      {
+        "name": "witness0",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "witness1",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",
@@ -845,6 +856,22 @@
       },
       {
         "name": "signer",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "TestatorMismatch",
+    "inputs": [
+      {
+        "name": "willTestator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "uploader",
         "type": "address",
         "internalType": "address"
       }
