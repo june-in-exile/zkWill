@@ -43,7 +43,8 @@ template UploadCid(keyBits, ciphertextBytes) {
     }
     permit.nonce <== nonce;
     permit.deadline <== deadline;
-    VerifyPermit(numPermission)(testator, permit, will, signature);
+    var chainId = 421614; // Arbitrum Sepolia
+    VerifyPermit(numPermission, chainId)(testator, permit, will, signature);
 }
 
 // Auto updated: 2025-10-22T20:12:31.487Z

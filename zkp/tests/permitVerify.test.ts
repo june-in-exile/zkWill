@@ -252,16 +252,20 @@ describe.skip("Show VerifyPermit Input", function (): void {
   });
 });
 
+// Each fixture signature is bound to the chain it was signed on via the EIP-712 domain
+const ANVIL_CHAIN_ID = "31337";
+const ARBITRUM_SEPOLIA_CHAIN_ID = "421614";
+
 describe("VerifyPermit Circuit", function () {
   let circuit: WitnessTester<["testator", "permit", "will", "signature"]>;
 
-  describe("Verify Permit with 1 Estate", function (): void {
+  describe("Verify Permit with 1 Estate on Anvil", function (): void {
     beforeAll(async function (): Promise<void> {
       circuit = await WitnessTester.construct(
         "circuits/shared/components/permitVerify/permitVerify.circom",
         "VerifyPermit",
         {
-          templateParams: ["1"],
+          templateParams: ["1", ANVIL_CHAIN_ID],
         },
       );
       circuit.setConstraint("permit with 1 estate");
@@ -539,13 +543,13 @@ describe("VerifyPermit Circuit", function () {
     });
   });
 
-  describe("Verify Permit with 2 Estates", function (): void {
+  describe("Verify Permit with 2 Estates on Anvil", function (): void {
     beforeAll(async function (): Promise<void> {
       circuit = await WitnessTester.construct(
         "circuits/shared/components/permitVerify/permitVerify.circom",
         "VerifyPermit",
         {
-          templateParams: ["2"],
+          templateParams: ["2", ANVIL_CHAIN_ID],
         },
       );
       circuit.setConstraint("permit with 2 estates");
@@ -562,7 +566,7 @@ describe("VerifyPermit Circuit", function () {
       { timeout: 60_000 },
       async function (): Promise<void> {
         const testWills = [
-          { /* for Arbitrum Sepolia */
+          {
             testator: BigInt("0x041F57c4492760aaE44ECed29b49a30DaAD3D4Cc"),
             executor: BigInt("0xF85d255D10EbA7Ec5a12724D134420A3C2b8EA3a"),
             estates: [
@@ -581,61 +585,24 @@ describe("VerifyPermit Circuit", function () {
                 amount: 5000000n,
               },
             ] as Estate[],
-            salt: 50488959960934814917696171139809710418977764484544753035433637781874432512215n,
-            will: BigInt("0xA0088d0e8f748832f220e981Ca928711F87f01D0"),
-            nonce: 94291489168460372312063129039338610341n as Nonce,
-            deadline: 4915260772 as Timestamp,
+            salt: 12694447595861466419244258169335441343265382743954236586072546691080547501349n,
+            will: BigInt("0xCfD7d00d14F04c021cB76647ACe8976580B83D54"),
+            nonce: 307798376644172688526653206965886192621n as Nonce,
+            deadline: 1789652776 as Timestamp,
             signature: {
               r: splitBigInt(
                 BigInt(
-                  "0xdb8c93bd4da5c30cdff1cbaf071def95a549e1445053c252e0f59c416179123b",
+                  "0xe2c3427d586d098f41d41f1a6c45dc61bc47bdf47ea0b74bbacee7e1fdaa8af8",
                 ),
               ),
               s: splitBigInt(
                 BigInt(
-                  "0x58c3619e8f41b35c01bc25c17341395629edd459bc8ba534cc82374cb089d695",
+                  "0x73434b90e656c5332de72de6e9ede658973947bc497fa4edafd9789de84b38ef",
                 ),
               ),
               v: 27,
             } as EcdsaSignature,
           },
-          // { /* for Anvil */
-          //   testator: BigInt("0x041F57c4492760aaE44ECed29b49a30DaAD3D4Cc"),
-          //   executor: BigInt("0xF85d255D10EbA7Ec5a12724D134420A3C2b8EA3a"),
-          //   estates: [
-          //     {
-          //       beneficiary: BigInt(
-          //         "0x3fF1F826E1180d151200A4d5431a3Aa3142C4A8c",
-          //       ),
-          //       token: BigInt("0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"),
-          //       amount: 1000n,
-          //     },
-          //     {
-          //       beneficiary: BigInt(
-          //         "0x3fF1F826E1180d151200A4d5431a3Aa3142C4A8c",
-          //       ),
-          //       token: BigInt("0xb1D4538B4571d411F07960EF2838Ce337FE1E80E"),
-          //       amount: 5000000n,
-          //     },
-          //   ] as Estate[],
-          //   salt: 12694447595861466419244258169335441343265382743954236586072546691080547501349n,
-          //   will: BigInt("0xCfD7d00d14F04c021cB76647ACe8976580B83D54"),
-          //   nonce: 307798376644172688526653206965886192621n as Nonce,
-          //   deadline: 1789652776 as Timestamp,
-          //   signature: {
-          //     r: splitBigInt(
-          //       BigInt(
-          //         "0xe2c3427d586d098f41d41f1a6c45dc61bc47bdf47ea0b74bbacee7e1fdaa8af8",
-          //       ),
-          //     ),
-          //     s: splitBigInt(
-          //       BigInt(
-          //         "0x73434b90e656c5332de72de6e9ede658973947bc497fa4edafd9789de84b38ef",
-          //       ),
-          //     ),
-          //     v: 27,
-          //   } as EcdsaSignature,
-          // },
         ];
 
         for (const {
@@ -909,5 +876,156 @@ describe("VerifyPermit Circuit", function () {
         });
       }
     });
+  });
+
+  describe("Verify Permit with 2 Estates on Arbitrum Sepolia", function (): void {
+    beforeAll(async function (): Promise<void> {
+      circuit = await WitnessTester.construct(
+        "circuits/shared/components/permitVerify/permitVerify.circom",
+        "VerifyPermit",
+        {
+          templateParams: ["2", ARBITRUM_SEPOLIA_CHAIN_ID],
+        },
+      );
+    }, 300_000); // 2-estate circuit compiles slowly under parallel load
+
+    afterAll(async function (): Promise<void> {
+      if (circuit) {
+        await circuit.release();
+      }
+    });
+
+    it(
+      "should accept the verification for valid permit",
+      { timeout: 60_000 },
+      async function (): Promise<void> {
+        const testWills = [
+          {
+            testator: BigInt("0x041F57c4492760aaE44ECed29b49a30DaAD3D4Cc"),
+            executor: BigInt("0xF85d255D10EbA7Ec5a12724D134420A3C2b8EA3a"),
+            estates: [
+              {
+                beneficiary: BigInt(
+                  "0x3fF1F826E1180d151200A4d5431a3Aa3142C4A8c",
+                ),
+                token: BigInt("0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"),
+                amount: 1000n,
+              },
+              {
+                beneficiary: BigInt(
+                  "0x3fF1F826E1180d151200A4d5431a3Aa3142C4A8c",
+                ),
+                token: BigInt("0xb1D4538B4571d411F07960EF2838Ce337FE1E80E"),
+                amount: 5000000n,
+              },
+            ] as Estate[],
+            salt: 50488959960934814917696171139809710418977764484544753035433637781874432512215n,
+            will: BigInt("0xA0088d0e8f748832f220e981Ca928711F87f01D0"),
+            nonce: 94291489168460372312063129039338610341n as Nonce,
+            deadline: 4915260772 as Timestamp,
+            signature: {
+              r: splitBigInt(
+                BigInt(
+                  "0xdb8c93bd4da5c30cdff1cbaf071def95a549e1445053c252e0f59c416179123b",
+                ),
+              ),
+              s: splitBigInt(
+                BigInt(
+                  "0x58c3619e8f41b35c01bc25c17341395629edd459bc8ba534cc82374cb089d695",
+                ),
+              ),
+              v: 27,
+            } as EcdsaSignature,
+          },
+        ];
+
+        for (const {
+          testator,
+          estates,
+          will,
+          nonce,
+          deadline,
+          signature,
+        } of testWills) {
+          const permitted: TokenPermission[] = estates.map((e) => ({
+            token: e.token,
+            amount: e.amount,
+          }));
+          await circuit.expectPass({
+            testator,
+            permit: [...flattenTokenPermissions(permitted), nonce, deadline],
+            will,
+            signature: flattenEcdsaSignature(signature),
+          });
+        }
+      },
+    );
+
+    it(
+      "should reject a permit signed for another chain",
+      { timeout: 60_000 },
+      async function (): Promise<void> {
+        // Valid on Anvil, so replaying it on Arbitrum Sepolia must fail
+        const testWills = [
+          {
+            testator: BigInt("0x041F57c4492760aaE44ECed29b49a30DaAD3D4Cc"),
+            executor: BigInt("0xF85d255D10EbA7Ec5a12724D134420A3C2b8EA3a"),
+            estates: [
+              {
+                beneficiary: BigInt(
+                  "0x3fF1F826E1180d151200A4d5431a3Aa3142C4A8c",
+                ),
+                token: BigInt("0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d"),
+                amount: 1000n,
+              },
+              {
+                beneficiary: BigInt(
+                  "0x3fF1F826E1180d151200A4d5431a3Aa3142C4A8c",
+                ),
+                token: BigInt("0xb1D4538B4571d411F07960EF2838Ce337FE1E80E"),
+                amount: 5000000n,
+              },
+            ] as Estate[],
+            salt: 12694447595861466419244258169335441343265382743954236586072546691080547501349n,
+            will: BigInt("0xCfD7d00d14F04c021cB76647ACe8976580B83D54"),
+            nonce: 307798376644172688526653206965886192621n as Nonce,
+            deadline: 1789652776 as Timestamp,
+            signature: {
+              r: splitBigInt(
+                BigInt(
+                  "0xe2c3427d586d098f41d41f1a6c45dc61bc47bdf47ea0b74bbacee7e1fdaa8af8",
+                ),
+              ),
+              s: splitBigInt(
+                BigInt(
+                  "0x73434b90e656c5332de72de6e9ede658973947bc497fa4edafd9789de84b38ef",
+                ),
+              ),
+              v: 27,
+            } as EcdsaSignature,
+          },
+        ];
+
+        for (const {
+          testator,
+          estates,
+          will,
+          nonce,
+          deadline,
+          signature,
+        } of testWills) {
+          const permitted: TokenPermission[] = estates.map((e) => ({
+            token: e.token,
+            amount: e.amount,
+          }));
+          await circuit.expectFail({
+            testator,
+            permit: [...flattenTokenPermissions(permitted), nonce, deadline],
+            will,
+            signature: flattenEcdsaSignature(signature),
+          });
+        }
+      },
+    );
   });
 });

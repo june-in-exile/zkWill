@@ -12,16 +12,17 @@ include "../bus.circom";
  * The imeplementation corresponds to the contracts deployed
  * at Mainnet 0x000000000022d473030f116ddee9f6b43ac78ba3
  * (SignatureTransfer.sol, ./libraries/PermitHash.sol, etc.)
+ *
+ * @param numPermission - Number of token permissions in the batch permit
+ * @param chainId - Chain ID bound into the EIP-712 domain (Mainnet = 1, Arbitrum Sepolia = 421614, Anvil = 31337)
  */
-template VerifyPermit(numPermission) {
+template VerifyPermit(numPermission, chainId) {
     signal input {address} testator;   // 20 byte unsigned integer
     input PermitBatchTransferFrom(numPermission) permit;
     signal input {address} will;       // 20 byte unsigned integer
     input EcdsaSignature() signature;
 
     var n = 64, k = 4;
-    // var chainId = 31337; // Anvil
-    var chainId = 421614; // Arbitrum Sepolia
 
     // Hashes permit to get typed permit digest
     signal {bit} permitDigest[256] <== HashPermit(numPermission)(permit, will);
