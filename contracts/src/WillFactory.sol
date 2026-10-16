@@ -24,6 +24,7 @@ contract WillFactory {
     mapping(string => uint256) private _cidNotarizedTimes;
     mapping(string => uint256) private _cidProbatedTimes;
     mapping(string => address[2]) private _cidWitnesses;
+    mapping(string => address) private _cidTestators;
     mapping(string => address) public wills;
 
     event CidUploaded(string indexed cid, uint256 timestamp);
@@ -39,6 +40,7 @@ contract WillFactory {
     error NotNotary(address caller, address notary);
     error NotOracle(address caller, address oracle);
     error NotExecutor(address caller, address executor);
+    error TestatorMismatch(address willTestator, address uploader);
 
     error AlreadyUploaded(string cid);
     error AlreadyNotarized(string cid);
@@ -48,7 +50,7 @@ contract WillFactory {
     error CidNotNotarized(string cid);
     error CidNotProbated(string cid);
 
-    error InvalidWitnessCount();
+    error InvalidWitnesses(address witness0, address witness1);
     error WitnessSignatureInvalid(string cid, address witness, bytes signature);
 
     error WrongCiphertext();
@@ -155,6 +157,11 @@ contract WillFactory {
     ) external {
         if (_cidUploadedTimes[_cid] > 0) revert AlreadyUploaded(_cid);
 
+        /* Two distinct, non-zero witnesses are required for notarization */
+        if (_witnesses[0] == address(0) || _witnesses[1] == address(0) || _witnesses[0] == _witnesses[1]) {
+            revert InvalidWitnesses(_witnesses[0], _witnesses[1]);
+        }
+
         if (!jsonCidVerifier.verifyCid(_will, _cid)) revert JsonCidInvalid(_cid);
 
         uint16 pubSignalsIdx = 0;
@@ -176,6 +183,7 @@ contract WillFactory {
         if (!cidUploadVerifier.verifyProof(_pA, _pB, _pC, _pubSignals)) revert CidUploadProofInvalid();
 
         _cidWitnesses[_cid] = _witnesses;
+        _cidTestators[_cid] = testator;
         _cidUploadedTimes[_cid] = block.timestamp;
         emit CidUploaded(_cid, block.timestamp);
     }
@@ -191,12 +199,15 @@ contract WillFactory {
         if (msg.sender != testator) revert NotTestator(msg.sender, testator);
 
         if (_cidUploadedTimes[_cid] == 0) revert CidNotUploaded(_cid);
+        /* Only the testator who uploaded the CID may revoke it */
+        if (msg.sender != _cidTestators[_cid]) revert NotTestator(msg.sender, _cidTestators[_cid]);
         /* Notarized CID should be revoked by notary */
         if (_cidNotarizedTimes[_cid] > _cidUploadedTimes[_cid]) revert AlreadyNotarized(_cid);
 
         if (!cidUploadVerifier.verifyProof(_pA, _pB, _pC, _pubSignals)) revert CidUploadProofInvalid();
 
         _cidUploadedTimes[_cid] = 0;
+        delete _cidTestators[_cid];
         emit UploadedCidRevoked(_cid, block.timestamp);
     }
 
@@ -260,6 +271,7 @@ contract WillFactory {
         uint16 pubSignalsIdx = 0;
         address testator = address(uint160(_pubSignals[pubSignalsIdx++]));
         address executor = address(uint160(_pubSignals[pubSignalsIdx++]));
+        if (testator != _cidTestators[_cid]) revert TestatorMismatch(testator, _cidTestators[_cid]);
         if (msg.sender != executor) revert NotExecutor(msg.sender, executor);
 
         Will.Estate[] memory estates = new Will.Estate[](maxEstates);
