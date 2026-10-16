@@ -3,9 +3,11 @@ include $(ENV_FILE)
 export
 
 .PHONY: split-multiplier2Verifier split-cidUploadVerifier split-willCreationVerifier split-verifiers \
-		sync-anvil sync-verifier sync clean-address clean-verifiers-and-proofs clean-typechain clean \
+		sync-anvil sync-multiplier2Verifier sync-cidUploadVerifier sync-willCreationVerifier sync-verifier sync clean-address clean-verifiers-and-proofs clean-typechain clean \
 		install build test test-fuzz test-integration test-unit deploy \
 	 	format typechain fork-clean fork fork-background
+
+ZKP_CIRCUITS_DIR := ../zkp/circuits
 
 ESTATES := "[($(BENEFICIARY0),$(TOKEN0),$(AMOUNT0)),($(BENEFICIARY1),$(TOKEN1),$(AMOUNT1))]"
 
@@ -36,9 +38,20 @@ split-verifiers: split-multiplier2Verifier split-cidUploadVerifier split-willCre
 sync-anvil:
 	@pnpm exec tsx ../shared/utils/file/syncAnvil.ts
 
-sync-verifier:
-	@pnpm exec tsx ../shared/utils/file/syncVerifier.ts
-	@$(MAKE) split-verifiers
+# splitVerifier.ts rewrites the file in place, so always copy a fresh verifier before splitting
+sync-multiplier2Verifier:
+	@cp $(ZKP_CIRCUITS_DIR)/multiplier2/contracts/verifier.sol ./src/Multiplier2Verifier.sol
+	@$(MAKE) split-multiplier2Verifier
+
+sync-cidUploadVerifier:
+	@cp $(ZKP_CIRCUITS_DIR)/cidUpload/contracts/verifier.sol ./src/CidUploadVerifier.sol
+	@$(MAKE) split-cidUploadVerifier
+
+sync-willCreationVerifier:
+	@cp $(ZKP_CIRCUITS_DIR)/willCreation/contracts/verifier.sol ./src/WillCreationVerifier.sol
+	@$(MAKE) split-willCreationVerifier
+
+sync-verifier: sync-cidUploadVerifier sync-willCreationVerifier
 
 sync: sync-anvil sync-verifier
 
