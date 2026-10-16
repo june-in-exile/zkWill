@@ -78,6 +78,9 @@ function EIP712_DOMAIN_SEPARATOR(chainId) {
         return ARBITRUM_SEPOLIA;
     }
 
+    // Fail compilation for chains without a precomputed separator rather than
+    // silently binding the circuit to the Mainnet domain
+    assert(chainId == 1);
     return MAINNET;
 }
 

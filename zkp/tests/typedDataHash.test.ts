@@ -112,4 +112,19 @@ describe("HashTypedData Circuit", function () {
       );
     });
   });
+
+  describe("Hash Typed Permit on an Unsupported Chain", function (): void {
+    it("should refuse to compile instead of falling back to another domain", async function (): Promise<void> {
+      // Arbitrum One has no precomputed domain separator
+      await expect(
+        WitnessTester.construct(
+          "circuits/shared/components/permitVerify/typedDataHash.circom",
+          "HashTypedData",
+          {
+            templateParams: ["42161"],
+          },
+        ),
+      ).rejects.toThrow(/assert/i);
+    });
+  });
 });
