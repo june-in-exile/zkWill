@@ -327,13 +327,13 @@
   },
   "permitVerify": {
     "VerifyPermit": {
-      "permit with 1 estate": 2896374,
-      "permit with 2 estates": 3128316
+      "permit with 1 estate": 2896438,
+      "permit with 2 estates": 3128380
     }
   },
   "pubkeyRecover": {
     "RecoverEcdsaPubkey": {
-      "recover public key from hash and signature": 1509415
+      "recover public key from hash and signature": 1509479
     }
   },
   "range": {

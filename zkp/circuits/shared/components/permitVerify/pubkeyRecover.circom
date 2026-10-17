@@ -2,7 +2,7 @@ pragma circom 2.2.2;
 
 include "circomlib/circuits/comparators.circom";
 include "circomlib/circuits/bitify.circom";
-include "../ecdsa/ecdsa.circom";
+include "ecdsaVerify.circom";
 include "../ecdsa/bigint_func.circom";
 include "../ecdsa/secp256k1_func.circom";
 include "../arithmetic.circom";
@@ -417,8 +417,8 @@ template RecoverEcdsaPubkey(n, k) {
         }
     }
 
-    // Verify the recovered pubkey using existing circuit
-    component verify = ECDSAVerifyNoPubkeyCheck(n, k);
+    // Verify the recovered pubkey and expose the parity of R = u1 * G + u2 * pubkey
+    component verify = ECDSAVerifyNoPubkeyCheckWithParity(n, k);
     for (var idx = 0; idx < k; idx++) {
         verify.r[idx] <== r[idx];
         verify.s[idx] <== s[idx];
@@ -429,4 +429,8 @@ template RecoverEcdsaPubkey(n, k) {
 
     // Constraint - verification must succeed
     verify.result === 1;
+
+    // Bind v to R.y's parity as ecrecover does; otherwise either candidate pubkey
+    // passes for the same (r, s) and Permit2 would recover a different signer
+    verify.yParity === recovery_id;
 }
